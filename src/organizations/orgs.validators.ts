@@ -4,7 +4,7 @@ export const createOrgSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   founder: z.string().min(1, 'Founder is required').optional(),
   admin: z.array(z.string()).optional(),
-  departments: z.array(z.string()),
+  departments: z.array(z.string()).optional(),
 })
 
 export const updateOrgSchema = z.object({
@@ -20,6 +20,6 @@ export const orgIdSchema = z.object({
 
 export const getAllOrgSchema = z.object({})
 
-export type CreateOrgInput = z.infer<typeof createOrgSchema>
-export type UpdateOrgInput = z.infer<typeof updateOrgSchema>
-export type OrgIdInput = z.infer<typeof orgIdSchema>
+export type createOrgInput = z.infer<typeof createOrgSchema>
+export type updateOrgInput = z.infer<typeof updateOrgSchema>
+export type orgIdInput = z.infer<typeof orgIdSchema>

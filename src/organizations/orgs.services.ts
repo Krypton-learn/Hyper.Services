@@ -7,26 +7,26 @@ import {
   updateOrgById,
 } from './orgs.crud'
 
-export interface CreateOrgInput {
+export interface createOrgInput {
   name: string
   founder: string
   admin?: string[]
   departments?: string[]
 }
 
-export interface UpdateOrgInput {
+export interface updateOrgInput {
   name?: string
   founder?: string
   admin?: string[]
   departments?: string[]
 }
 
-export async function createOrgsService(input: CreateOrgInput) {
+export async function createOrgsService(input: createOrgInput) {
   const founderId = new ObjectId(input.founder)
   const adminIds = input.admin
     ? input.admin.map((id) => new ObjectId(id))
     : []
-  
+
   if (!adminIds.some(id => id.toString() === founderId.toString())) {
     adminIds.push(founderId)
   }
@@ -53,7 +53,7 @@ export async function removeOrgsService(id: string) {
   return deleteOrgById(new ObjectId(id))
 }
 
-export async function editOrgsService(id: string, input: UpdateOrgInput) {
+export async function editOrgsService(id: string, input: updateOrgInput) {
   const updateFields: Record<string, unknown> = {}
 
   if (input.name) updateFields.name = input.name

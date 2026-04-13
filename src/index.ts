@@ -3,6 +3,7 @@ import { connectDB } from './core/db.core'
 import { authRoutes } from './auth/auth.routes'
 import { taskRoutes } from './tasks/tasks.routes'
 import { orgRoutes } from './organizations/orgs.routes'
+import { phaseRoutes } from './phases/phases.routes'
 
 export const app = new Hono()
 
@@ -13,6 +14,8 @@ app.route('api/auth', authRoutes);
 app.route('api/tasks', taskRoutes)
 
 app.route('api/orgs', orgRoutes)
+
+app.route('api/phases', phaseRoutes)
 
 app.get('/', (c) => {
   return c.text('Hello Hono!')

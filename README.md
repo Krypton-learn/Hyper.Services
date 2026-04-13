@@ -45,6 +45,14 @@ src/
 │   ├── orgs.schema.ts   # MongoDB schema
 │   ├── orgs.services.ts
 │   └── orgs.validators.ts
+├── phases/             # Phases module
+│   ├── phases.crud.ts  # Database operations
+│   ├── phases.controllers.ts
+│   ├── phases.helpers.ts
+│   ├── phases.routes.ts
+│   ├── phases.schema.ts # MongoDB schema
+│   ├── phases.services.ts
+│   └── phases.validators.ts
 ├── core/               # Core utilities
 │   ├── db.core.ts      # MongoDB connection
 │   └── env.core.ts     # Environment variables
@@ -249,6 +257,65 @@ DELETE /api/orgs/delete/:id
 
 Only the founder can delete the organization.
 
+---
+
+### Phases (`/api/phases`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/phases/create` | Create a new phase | Yes |
+| GET | `/api/phases/get/all` | Get all phases | No |
+| GET | `/api/phases/get/:id` | Get phase by ID | No |
+| PATCH | `/api/phases/edit/:id` | Update phase | Yes |
+| DELETE | `/api/phases/delete/:id` | Delete phase | Yes |
+
+#### Create Phase (requires Authorization header)
+```
+Authorization: Bearer <access_token>
+
+POST /api/phases/create
+```
+
+```json
+Request:
+{
+  "name": "Phase name",
+  "description": "Phase description",
+  "tasks": ["task_id1", "task_id2"],
+  "budget": 5000,
+  "starting_date": "2024-01-01",
+  "ending_date": "2024-03-31",
+  "sops": ["document_id1", "document_id2"],
+  "organization": "organization_id"
+}
+
+Response:
+{
+  "message": "Phase created successfully",
+  "phase": { ... }
+}
+```
+
+Note: Only the organization founder can create phases.
+
+#### Update Phase (requires Authorization header)
+```
+Authorization: Bearer <access_token>
+
+PATCH /api/phases/edit/:id
+```
+
+Only the organization founder can update the phase.
+
+#### Delete Phase (requires Authorization header)
+```
+Authorization: Bearer <access_token>
+
+DELETE /api/phases/delete/:id
+```
+
+Only the organization founder can delete the phase.
+
 ### Health Check
 
 | Method | Endpoint | Description |
@@ -340,6 +407,21 @@ Visit your Workers URL (e.g., `https://your-project.workers.dev/health`)
 | `founder` | ObjectId | Reference to employee who created the org |
 | `admin` | ObjectId[] | Array of admin user IDs (founder auto-added) |
 | `departments` | String[] | List of department names |
+| `created_at` | Date | Creation timestamp |
+| `updated_at` | Date | Last update timestamp |
+
+## Phase Schema Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | String | Phase name (required) |
+| `description` | String | Phase description |
+| `tasks` | ObjectId[] | References to tasks |
+| `budget` | Number | Phase budget |
+| `starting_date` | Date | Phase start date |
+| `ending_date` | Date | Phase end date |
+| `sops` | ObjectId[] | References to SOP documents |
+| `organization` | ObjectId | Reference to organization (required) |
 | `created_at` | Date | Creation timestamp |
 | `updated_at` | Date | Last update timestamp |
 
