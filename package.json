@@ -1,0 +1,20 @@
+{
+  "name": "hyper_revise",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "wrangler deploy --minify",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "hono": "^4.12.12",
+    "hono/jwt": "^4.12.12",
+    "mongodb": "^6.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "wrangler": "^4.4.0"
+  },
+  "compatibility_date": "2024-01-01"
+}
