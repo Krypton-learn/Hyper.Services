@@ -1,6 +1,7 @@
+import { ObjectId } from 'mongodb'
 import { getDB } from '../core/db.core'
 
-const collectionName = 'employees'
+const collectionName = 'users'
 
 export async function findUserByEmail(email: string) {
   const db = getDB()
@@ -21,4 +22,20 @@ export async function createUser(user: { username: string; email: string; passwo
   const collection = db.collection(collectionName)
   const result = await collection.insertOne(user)
   return result.insertedId
+}
+
+export async function updateUserById(id: string, updateFields: Record<string, unknown>) {
+  const db = getDB()
+  const collection = db.collection(collectionName)
+  return collection.findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $set: updateFields },
+    { returnDocument: 'after' }
+  )
+}
+
+export async function findUserById(id: string) {
+  const db = getDB()
+  const collection = db.collection(collectionName)
+  return collection.findOne({ _id: new ObjectId(id) })
 }

@@ -6,6 +6,9 @@ import {
   deleteOrgById,
   updateOrgById,
 } from './orgs.crud'
+import { updateUserProfileService } from '../auth/auth.serivces'
+import { createEmployeeService } from '../employees/employees.services'
+import { findUserById } from '../auth/auth.crud'
 
 export interface createOrgInput {
   name: string
@@ -38,7 +41,23 @@ export async function createOrgsService(input: createOrgInput) {
     departments: input.departments || [],
   }
 
-  return insertOrg(org)
+  const createdOrg = await insertOrg(org)
+  
+  await updateUserProfileService(input.founder, { organization: createdOrg._id.toString() })
+
+  const founder = await findUserById(input.founder)
+  
+  if (founder) {
+    await createEmployeeService({
+      username: founder.username,
+      email: founder.email,
+      passwordHash: founder.passwordHash,
+      organization: createdOrg._id.toString(),
+      role: 'Head',
+    })
+  }
+
+  return createdOrg
 }
 
 export async function getOrgsService() {

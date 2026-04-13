@@ -1,10 +1,3 @@
-```txt
-bun install
-bun run dev
-```
-
-```txt
-bun run deploy
 # Hyper Revise - Task Management API
 
 A Hono-based REST API for task and organization management with MongoDB and Cloudflare Workers support.
@@ -26,9 +19,9 @@ src/
 │   ├── auth.controllers.ts
 │   ├── auth.helpers.ts
 │   ├── auth.routes.ts
-│   ├── auth.schemas.ts
+│   ├── auth.schemas.ts     # MongoDB schema (users collection)
 │   ├── auth.serivces.ts
-│   └── auth.validators.ts
+│   └── auth.validators.ts  # Zod validators
 ├── tasks/              # Tasks module
 │   ├── tasks.crud.ts   # Database operations
 │   ├── tasks.controllers.ts
@@ -42,7 +35,7 @@ src/
 │   ├── orgs.controllers.ts
 │   ├── orgs.helpers.ts
 │   ├── orgs.routes.ts
-│   ├── orgs.schema.ts   # MongoDB schema
+│   ├── orgs.schema.ts  # MongoDB schema
 │   ├── orgs.services.ts
 │   └── orgs.validators.ts
 ├── phases/             # Phases module
@@ -53,6 +46,14 @@ src/
 │   ├── phases.schema.ts # MongoDB schema
 │   ├── phases.services.ts
 │   └── phases.validators.ts
+├── employees/          # Employees module
+│   ├── employees.crud.ts      # Database operations
+│   ├── employees.controllers.ts
+│   ├── employees.helpers.ts   # JWT & auth helpers
+│   ├── employees.routes.ts
+│   ├── employees.schema.ts    # MongoDB schema
+│   ├── employees.services.ts
+│   └── employees.validators.ts # Zod validators
 ├── core/               # Core utilities
 │   ├── db.core.ts      # MongoDB connection
 │   └── env.core.ts     # Environment variables
@@ -146,62 +147,54 @@ Response:
 
 ---
 
-### Tasks (`/api/tasks`)
+### Employees (`/api/employees`)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/tasks/create` | Create a new task |
-| GET | `/api/tasks/get/all` | Get all tasks |
-| GET | `/api/tasks/get/:id` | Get task by ID |
-| PATCH | `/api/tasks/edit/:id` | Update task |
-| DELETE | `/api/tasks/delete/:id` | Delete task |
-| PATCH | `/api/tasks/complete/:id` | Mark task as completed |
-| PATCH | `/api/tasks/add-team-members/:id` | Add temp team members |
-| PATCH | `/api/tasks/join-team/:id` | Join a team (requires auth) |
-| PATCH | `/api/tasks/reject-team/:id` | Reject team invitation (requires auth) |
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/employees/create` | Create a new employee | Yes |
+| GET | `/api/employees/get/all` | Get all employees in org | Yes |
+| GET | `/api/employees/get/:id` | Get employee by ID | Yes |
+| PATCH | `/api/employees/edit/:id` | Update employee | Yes |
+| DELETE | `/api/employees/delete/:id` | Delete employee | Yes |
 
-#### Create Task
+#### Create Employee (requires Authorization header)
+```
+Authorization: Bearer <access_token>
+
+POST /api/employees/create
+```
+
 ```json
 Request:
 {
-  "title": "Task title",
-  "created_by": "user_id",
-  "assigned_to": "user_id (optional)",
-  "starting_date": "2024-01-01",
-  "due_date": "2024-01-31",
-  "status": "Upcoming",
-  "team": ["user_id1", "user_id2"],
-  "phase": "phase_id",
-  "tempTeamMembers": ["user_id1"],
-  "description": "Task description",
-  "priority": "High"
+  "username": "john",
+  "email": "john@example.com",
+  "passwordHash": "hashed_password",
+  "firstName": "John",
+  "lastName": "Doe",
+  "phone": "+1234567890",
+  "position": "Developer",
+  "department": "Engineering",
+  "role": "employee"
 }
 
 Response:
 {
-  "message": "Task created successfully",
-  "task": { ... }
+  "message": "Employee created successfully",
+  "employee": { ... }
 }
 ```
 
-#### Get All Tasks
-```
-GET /api/tasks/get/all?populate=created_by,assigned_to
-```
+Note: Only organization founder or admin can create employees. The organization is automatically assigned from the authenticated user's organization.
 
-#### Join Team (requires Authorization header)
+#### Get All Employees (requires Authorization header)
 ```
 Authorization: Bearer <access_token>
 
-PATCH /api/tasks/join-team/:id
+GET /api/employees/get/all
 ```
 
-#### Reject Team Invitation (requires Authorization header)
-```
-Authorization: Bearer <access_token>
-
-PATCH /api/tasks/reject-team/:id
-```
+Returns all employees belonging to the authenticated user's organization.
 
 ---
 
@@ -237,25 +230,26 @@ Response:
 }
 ```
 
-Note: The founder is automatically set from the authenticated user's token and added to the admin array.
+Note: 
+- The founder is automatically set from the authenticated user's token and added to the admin array.
+- When an organization is created, the founder's user profile is updated with the organization ID.
+- A corresponding employee record is created for the founder with `role: 'Head'`.
 
-#### Update Organization (requires Authorization header)
-```
-Authorization: Bearer <access_token>
+---
 
-PATCH /api/orgs/edit/:id
-```
+### Tasks (`/api/tasks`)
 
-Only the founder or admin can update the organization.
-
-#### Delete Organization (requires Authorization header)
-```
-Authorization: Bearer <access_token>
-
-DELETE /api/orgs/delete/:id
-```
-
-Only the founder can delete the organization.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/tasks/create` | Create a new task |
+| GET | `/api/tasks/get/all` | Get all tasks |
+| GET | `/api/tasks/get/:id` | Get task by ID |
+| PATCH | `/api/tasks/edit/:id` | Update task |
+| DELETE | `/api/tasks/delete/:id` | Delete task |
+| PATCH | `/api/tasks/complete/:id` | Mark task as completed |
+| PATCH | `/api/tasks/add-team-members/:id` | Add temp team members |
+| PATCH | `/api/tasks/join-team/:id` | Join a team (requires auth) |
+| PATCH | `/api/tasks/reject-team/:id` | Reject team invitation (requires auth) |
 
 ---
 
@@ -269,52 +263,7 @@ Only the founder can delete the organization.
 | PATCH | `/api/phases/edit/:id` | Update phase | Yes |
 | DELETE | `/api/phases/delete/:id` | Delete phase | Yes |
 
-#### Create Phase (requires Authorization header)
-```
-Authorization: Bearer <access_token>
-
-POST /api/phases/create
-```
-
-```json
-Request:
-{
-  "name": "Phase name",
-  "description": "Phase description",
-  "tasks": ["task_id1", "task_id2"],
-  "budget": 5000,
-  "starting_date": "2024-01-01",
-  "ending_date": "2024-03-31",
-  "sops": ["document_id1", "document_id2"],
-  "organization": "organization_id"
-}
-
-Response:
-{
-  "message": "Phase created successfully",
-  "phase": { ... }
-}
-```
-
-Note: Only the organization founder can create phases.
-
-#### Update Phase (requires Authorization header)
-```
-Authorization: Bearer <access_token>
-
-PATCH /api/phases/edit/:id
-```
-
-Only the organization founder can update the phase.
-
-#### Delete Phase (requires Authorization header)
-```
-Authorization: Bearer <access_token>
-
-DELETE /api/phases/delete/:id
-```
-
-Only the organization founder can delete the phase.
+---
 
 ### Health Check
 
@@ -325,70 +274,56 @@ Only the organization founder can delete the phase.
 
 ---
 
-## Deploying to Cloudflare Workers
+## Database Schemas
 
-### Prerequisites
+### Users Schema (auth.schemas.ts)
 
-- Cloudflare account
-- Wrangler CLI installed (`npm install -g wrangler`)
-- MongoDB Atlas database (Cloudflare Workers can't connect to local MongoDB)
+| Field | Type | Description |
+|-------|------|-------------|
+| `username` | String | Username (required, unique) |
+| `email` | String | Email (required, unique) |
+| `passwordHash` | String | Hashed password (required) |
+| `organization` | ObjectId | Reference to organization |
+| `created_at` | Date | Creation timestamp |
+| `updated_at` | Date | Last update timestamp |
 
-### 1. Update Environment Variables for Cloudflare
+### Employees Schema (employees.schema.ts)
 
-Edit `wrangler.toml` or use Cloudflare Dashboard to add these secrets:
+| Field | Type | Description |
+|-------|------|-------------|
+| `username` | String | Username (required, unique) |
+| `email` | String | Email (required, unique) |
+| `passwordHash` | String | Hashed password (required) |
+| `firstName` | String | First name |
+| `lastName` | String | Last name |
+| `phone` | String | Phone number |
+| `position` | String | Job position |
+| `department` | String | Department |
+| `organization` | ObjectId | Reference to organization |
+| `role` | Enum | "employee" or "Head" |
+| `profilePicture` | String | Profile image URL |
+| `address` | String | Address |
+| `joiningDate` | Date | Date of joining |
+| `created_at` | Date | Creation timestamp |
+| `updated_at` | Date | Last update timestamp |
 
-```bash
-wrangler secret put MONGO_URI
-# Enter your MongoDB Atlas connection string
+### Organizations Schema (orgs.schema.ts)
 
-wrangler secret put DB_NAME
-# Enter your database name
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | String | Organization name (required) |
+| `founder` | ObjectId | Reference to employee (required) |
+| `admin` | ObjectId[] | Array of admin user IDs |
+| `departments` | String[] | List of department names |
+| `created_at` | Date | Creation timestamp |
+| `updated_at` | Date | Last update timestamp |
 
-wrangler secret put JWT_SECRET
-# Enter your JWT secret
-```
-
-### 2. Build and Deploy
-
-```bash
-bun run deploy
-# or
-npm run deploy
-```
-
-### 3. Configure CORS (if needed)
-
-```txt
-bun run cf-typegen
-```
-
-Pass the `CloudflareBindings` as generics when instantiation `Hono`:
-
-```ts
-app.use('/*', async (c, next) => {
-  await next()
-  c.res.headers.set('Access-Control-Allow-Origin', '*')
-  c.res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-  c.res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  return c.res
-})
-```
-
-### 4. Test Your Deployment
-
-```bash
-wrangler tail
-```
-
-Visit your Workers URL (e.g., `https://your-project.workers.dev/health`)
-
-## Task Schema Fields
+### Tasks Schema (tasks.schemas.ts)
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `title` | String | Task title (required) |
 | `created_by` | ObjectId | Reference to employee |
-| `created_at` | Date | Creation timestamp |
 | `assigned_to` | ObjectId | Assigned employee |
 | `starting_date` | Date | Task start date |
 | `due_date` | Date | Task due date |
@@ -399,18 +334,7 @@ Visit your Workers URL (e.g., `https://your-project.workers.dev/health`)
 | `description` | String | Task description |
 | `priority` | Enum | "Low", "Medium", "High", "Urgent" |
 
-## Organization Schema Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `name` | String | Organization name (required) |
-| `founder` | ObjectId | Reference to employee who created the org |
-| `admin` | ObjectId[] | Array of admin user IDs (founder auto-added) |
-| `departments` | String[] | List of department names |
-| `created_at` | Date | Creation timestamp |
-| `updated_at` | Date | Last update timestamp |
-
-## Phase Schema Fields
+### Phases Schema (phases.schema.ts)
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -424,6 +348,40 @@ Visit your Workers URL (e.g., `https://your-project.workers.dev/health`)
 | `organization` | ObjectId | Reference to organization (required) |
 | `created_at` | Date | Creation timestamp |
 | `updated_at` | Date | Last update timestamp |
+
+---
+
+## Deploying to Cloudflare Workers
+
+### Prerequisites
+
+- Cloudflare account
+- Wrangler CLI installed (`npm install -g wrangler`)
+- MongoDB Atlas database (Cloudflare Workers can't connect to local MongoDB)
+
+### 1. Update Environment Variables for Cloudflare
+
+```bash
+wrangler secret put MONGO_URI
+wrangler secret put DB_NAME
+wrangler secret put JWT_SECRET
+```
+
+### 2. Build and Deploy
+
+```bash
+bun run deploy
+```
+
+### 3. Test Your Deployment
+
+```bash
+wrangler tail
+```
+
+Visit your Workers URL (e.g., `https://your-project.workers.dev/health`)
+
+---
 
 ## Environment Variables
 

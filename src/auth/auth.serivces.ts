@@ -1,5 +1,6 @@
+import { ObjectId } from 'mongodb'
 import { hashPassword, verifyPassword, createJWT } from './auth.helpers'
-import { findUserByUsernameOrEmail, createUser, findUserByEmail } from './auth.crud'
+import { findUserByUsernameOrEmail, createUser, findUserByEmail, updateUserById } from './auth.crud'
 
 export async function registerUserService(
   username: string,
@@ -49,6 +50,24 @@ export async function loginUserService(email: string, password: string) {
     return { accessToken, refreshToken, userId: user._id }
   } catch (error) {
     console.error('Login user error:', error)
+    throw error
+  }
+}
+
+export async function updateUserProfileService(
+  userId: string,
+  updateFields: { organization?: string }
+) {
+  try {
+    const updateData: Record<string, unknown> = {}
+    if (updateFields.organization) {
+      updateData.organization = new ObjectId(updateFields.organization)
+    }
+
+    const updatedUser = await updateUserById(userId, updateData)
+    return updatedUser
+  } catch (error) {
+    console.error('Update user profile error:', error)
     throw error
   }
 }

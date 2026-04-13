@@ -1,6 +1,6 @@
 import { Schema } from 'mongodb'
 
-export const employeeSchema = new Schema(
+export const userSchema = new Schema(
 	{
 		username: {
 			type: String,
@@ -16,9 +16,13 @@ export const employeeSchema = new Schema(
 			type: String,
 			required: true,
 		},
+		organization: {
+			type: Schema.Types.ObjectId,
+			ref: 'organizations',
+		},
 	},
 	{
-		collection: 'employees',
+		collection: 'users',
 		timestamps: true,
 	}
 )
