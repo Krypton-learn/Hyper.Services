@@ -7,7 +7,7 @@ bun run dev
 bun run deploy
 # Hyper Revise - Task Management API
 
-A Hono-based REST API for task management with MongoDB and Cloudflare Workers support.
+A Hono-based REST API for task and organization management with MongoDB and Cloudflare Workers support.
 
 ## Tech Stack
 
@@ -37,6 +37,14 @@ src/
 │   ├── tasks.schemas.ts
 │   ├── tasks.services.ts
 │   └── tasks.validators.ts
+├── organizations/      # Organizations module
+│   ├── orgs.crud.ts    # Database operations
+│   ├── orgs.controllers.ts
+│   ├── orgs.helpers.ts
+│   ├── orgs.routes.ts
+│   ├── orgs.schema.ts   # MongoDB schema
+│   ├── orgs.services.ts
+│   └── orgs.validators.ts
 ├── core/               # Core utilities
 │   ├── db.core.ts      # MongoDB connection
 │   └── env.core.ts     # Environment variables
@@ -187,6 +195,60 @@ Authorization: Bearer <access_token>
 PATCH /api/tasks/reject-team/:id
 ```
 
+---
+
+### Organizations (`/api/orgs`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/orgs/create` | Create a new organization | Yes |
+| GET | `/api/orgs/get/all` | Get all organizations | No |
+| GET | `/api/orgs/get/:id` | Get organization by ID | No |
+| PATCH | `/api/orgs/edit/:id` | Update organization | Yes |
+| DELETE | `/api/orgs/delete/:id` | Delete organization | Yes |
+
+#### Create Organization (requires Authorization header)
+```
+Authorization: Bearer <access_token>
+
+POST /api/orgs/create
+```
+
+```json
+Request:
+{
+  "name": "Organization name",
+  "admin": ["user_id1", "user_id2"],
+  "departments": ["Engineering", "Marketing"]
+}
+
+Response:
+{
+  "message": "Organization created successfully",
+  "org": { ... }
+}
+```
+
+Note: The founder is automatically set from the authenticated user's token and added to the admin array.
+
+#### Update Organization (requires Authorization header)
+```
+Authorization: Bearer <access_token>
+
+PATCH /api/orgs/edit/:id
+```
+
+Only the founder or admin can update the organization.
+
+#### Delete Organization (requires Authorization header)
+```
+Authorization: Bearer <access_token>
+
+DELETE /api/orgs/delete/:id
+```
+
+Only the founder can delete the organization.
+
 ### Health Check
 
 | Method | Endpoint | Description |
@@ -269,6 +331,17 @@ Visit your Workers URL (e.g., `https://your-project.workers.dev/health`)
 | `tempTeamMembers` | ObjectId[] | Pending team invitations |
 | `description` | String | Task description |
 | `priority` | Enum | "Low", "Medium", "High", "Urgent" |
+
+## Organization Schema Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | String | Organization name (required) |
+| `founder` | ObjectId | Reference to employee who created the org |
+| `admin` | ObjectId[] | Array of admin user IDs (founder auto-added) |
+| `departments` | String[] | List of department names |
+| `created_at` | Date | Creation timestamp |
+| `updated_at` | Date | Last update timestamp |
 
 ## Environment Variables
 
