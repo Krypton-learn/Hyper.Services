@@ -31,6 +31,26 @@ export const taskSchema = new Schema(
       enum: ['Due', 'Upcoming', 'Completed'],
       default: 'Upcoming',
     },
+    team: {
+      type: [Schema.Types.ObjectId],
+      ref: 'employees',
+    },
+    phase: {
+      type: Schema.Types.ObjectId,
+      ref: 'phases',
+    },
+    tempTeamMembers: {
+      type: [Schema.Types.ObjectId],
+      ref: 'employees',
+    },
+    description: {
+      type: String,
+    },
+    priority: {
+      type: String,
+      enum: ['Low', 'Medium', 'High', 'Urgent'],
+      default: 'Medium',
+    },
   },
   {
     collection: 'tasks',

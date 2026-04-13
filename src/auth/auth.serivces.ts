@@ -1,7 +1,5 @@
-import { getDB } from '../core/db.core'
 import { hashPassword, verifyPassword, createJWT } from './auth.helpers'
-
-const collectionName = 'employees'
+import { findUserByUsernameOrEmail, createUser, findUserByEmail } from './auth.crud'
 
 export async function registerUserService(
   username: string,
@@ -9,12 +7,7 @@ export async function registerUserService(
   password: string
 ) {
   try {
-    const db = getDB()
-    const collection = db.collection(collectionName)
-
-    const existingUser = await collection.findOne({
-      $or: [{ username }, { email }],
-    })
+    const existingUser = await findUserByUsernameOrEmail(username, email)
 
     if (existingUser) {
       throw new Error('Username or email already exists')
@@ -28,8 +21,8 @@ export async function registerUserService(
       passwordHash,
     }
 
-    const result = await collection.insertOne(employee)
-    return result.insertedId
+    const result = await createUser(employee)
+    return result
   } catch (error) {
     console.error('Register user error:', error)
     throw error
@@ -38,10 +31,7 @@ export async function registerUserService(
 
 export async function loginUserService(email: string, password: string) {
   try {
-    const db = getDB()
-    const collection = db.collection(collectionName)
-
-    const user = await collection.findOne({ email })
+    const user = await findUserByEmail(email)
 
     if (!user) {
       throw new Error('Invalid email or password')

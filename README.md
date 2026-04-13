@@ -7,7 +7,7 @@ bun run dev
 bun run deploy
 ```
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
+### 3. Configure CORS (if needed)
 
 ```txt
 bun run cf-typegen
@@ -16,36 +16,44 @@ bun run cf-typegen
 Pass the `CloudflareBindings` as generics when instantiation `Hono`:
 
 ```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
+app.use('/*', async (c, next) => {
+  await next()
+  c.res.headers.set('Access-Control-Allow-Origin', '*')
+  c.res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+  c.res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  return c.res
+})
 ```
 
-## Tasks Module
+### 4. Test Your Deployment
 
-### Schema Fields
-- `title` - Task title (required)
-- `created_by` - Reference to employee who created the task
-- `created_at` - Timestamp of task creation
-- `assigned_to` - Reference to assigned employee
-- `starting_date` - Task start date
-- `due_date` - Task due date
-- `status` - Enum: "Due", "Upcoming", "Completed"
+```bash
+wrangler tail
+```
 
-### Routes
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/tasks/create` | Create a new task |
-| GET | `/tasks/all` | Get all tasks |
-| GET | `/tasks/:id` | Get task by ID |
-| DELETE | `/tasks/:id` | Delete task by ID |
-| PATCH | `/tasks/:id` | Update task by ID |
+Visit your Workers URL (e.g., `https://your-project.workers.dev/health`)
 
-### Query Parameters
-- `populate` - Populate referenced fields (e.g., `?populate=created_by,assigned_to`)
+## Task Schema Fields
 
-### Services
-- `createTaskService` - Create a new task
-- `getAllTaskService` - Get all tasks with optional population
-- `getTaskByIdService` - Get task by ID with optional population
-- `deleteTaskService` - Delete task by ID
-- `editTaskService` - Update task fields
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | String | Task title (required) |
+| `created_by` | ObjectId | Reference to employee |
+| `created_at` | Date | Creation timestamp |
+| `assigned_to` | ObjectId | Assigned employee |
+| `starting_date` | Date | Task start date |
+| `due_date` | Date | Task due date |
+| `status` | Enum | "Due", "Upcoming", "Completed" |
+| `team` | ObjectId[] | Team members |
+| `phase` | ObjectId | Reference to phase |
+| `tempTeamMembers` | ObjectId[] | Pending team invitations |
+| `description` | String | Task description |
+| `priority` | Enum | "Low", "Medium", "High", "Urgent" |
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `MONGO_URI` | MongoDB connection string | Yes |
+| `DB_NAME` | Database name | Yes |
+| `JWT_SECRET` | Secret for JWT signing | Yes |
