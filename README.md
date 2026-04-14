@@ -99,6 +99,10 @@ bun run dev
 
 The server will start at `http://localhost:3000`
 
+### Live Demo
+
+The API is deployed at: **https://hyper-services.onrender.com**
+
 ### 4. Run Production Build (Local)
 
 ```bash
