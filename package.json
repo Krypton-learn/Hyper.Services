@@ -9,12 +9,11 @@
   },
   "dependencies": {
     "hono": "^4.12.12",
-    "hono/jwt": "^4.12.12",
     "mongodb": "^6.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "wrangler": "^4.4.0"
+    "wrangler": "^4.82.2"
   },
   "compatibility_date": "2024-01-01"
 }
