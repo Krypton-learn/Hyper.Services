@@ -113,6 +113,7 @@ bun run start
 |--------|----------|-------------|
 | POST | `/api/auth/register` | Register a new user |
 | POST | `/api/auth/login` | Login and get tokens |
+| POST | `/api/auth/refresh` | Refresh access token |
 
 #### Register
 ```json
@@ -120,7 +121,13 @@ Request:
 {
   "username": "john",
   "email": "john@example.com",
-  "password": "password123"
+  "password": "password123",
+  "firstName": "John",
+  "lastName": "Doe",
+  "phone": "+1234567890",
+  "dob": "1990-01-01T00:00:00Z",
+  "interests": ["coding", "reading"],
+  "address": "123 Main St"
 }
 
 Response:
@@ -144,6 +151,20 @@ Response:
   "accessToken": "..."
 }
 ```
+A `refresh_token` cookie is also set (httpOnly, 7 days).
+
+#### Refresh Token
+```
+POST /api/auth/refresh
+```
+Reads `refresh_token` from cookie and returns a new access token.
+
+```json
+Response:
+{
+  "accessToken": "..."
+}
+```
 
 ---
 
@@ -157,44 +178,42 @@ Response:
 | PATCH | `/api/employees/edit/:id` | Update employee | Yes |
 | DELETE | `/api/employees/delete/:id` | Delete employee | Yes |
 
-#### Create Employee (requires Authorization header)
+#### Get All Employees
+```
+GET /api/employees/get/all?page=1&populate=true
+```
+
+Query Parameters:
+- `page` - Page number (default: 1)
+- `populate` - Set to `true` to populate user data
+
+Response:
+```json
+{
+  "employees": [...],
+  "page": 1,
+  "limit": 20
+}
+```
+
+#### Create Employee
 ```
 Authorization: Bearer <access_token>
 
 POST /api/employees/create
 ```
-
 ```json
 Request:
 {
-  "username": "john",
-  "email": "john@example.com",
-  "passwordHash": "hashed_password",
-  "firstName": "John",
-  "lastName": "Doe",
-  "phone": "+1234567890",
-  "position": "Developer",
+  "userId": "...",
+  "isAdmin": false,
+  "isFounder": false,
   "department": "Engineering",
   "role": "employee"
-}
-
-Response:
-{
-  "message": "Employee created successfully",
-  "employee": { ... }
 }
 ```
 
 Note: Only organization founder or admin can create employees. The organization is automatically assigned from the authenticated user's organization.
-
-#### Get All Employees (requires Authorization header)
-```
-Authorization: Bearer <access_token>
-
-GET /api/employees/get/all
-```
-
-Returns all employees belonging to the authenticated user's organization.
 
 ---
 
@@ -208,32 +227,23 @@ Returns all employees belonging to the authenticated user's organization.
 | PATCH | `/api/orgs/edit/:id` | Update organization | Yes |
 | DELETE | `/api/orgs/delete/:id` | Delete organization | Yes |
 
-#### Create Organization (requires Authorization header)
+#### Get All Organizations
 ```
-Authorization: Bearer <access_token>
-
-POST /api/orgs/create
+GET /api/orgs/get/all?page=1&populate=true
 ```
 
-```json
-Request:
-{
-  "name": "Organization name",
-  "admin": ["user_id1", "user_id2"],
-  "departments": ["Engineering", "Marketing"]
-}
+Query Parameters:
+- `page` - Page number (default: 1)
+- `populate` - Set to `true` to populate founder and admin user data
 
 Response:
+```json
 {
-  "message": "Organization created successfully",
-  "org": { ... }
+  "orgs": [...],
+  "page": 1,
+  "limit": 20
 }
 ```
-
-Note: 
-- The founder is automatically set from the authenticated user's token and added to the admin array.
-- When an organization is created, the founder's user profile is updated with the organization ID.
-- A corresponding employee record is created for the founder with `role: 'Head'`.
 
 ---
 
@@ -251,6 +261,15 @@ Note:
 | PATCH | `/api/tasks/join-team/:id` | Join a team (requires auth) |
 | PATCH | `/api/tasks/reject-team/:id` | Reject team invitation (requires auth) |
 
+#### Get All Tasks
+```
+GET /api/tasks/get/all?page=1&populate=created_by,assigned_to
+```
+
+Query Parameters:
+- `page` - Page number (default: 1)
+- `populate` - Comma-separated fields to populate (`created_by`, `assigned_to`)
+
 ---
 
 ### Phases (`/api/phases`)
@@ -263,6 +282,15 @@ Note:
 | PATCH | `/api/phases/edit/:id` | Update phase | Yes |
 | DELETE | `/api/phases/delete/:id` | Delete phase | Yes |
 
+#### Get All Phases
+```
+GET /api/phases/get/all?page=1&populate=true
+```
+
+Query Parameters:
+- `page` - Page number (default: 1)
+- `populate` - Set to `true` to populate organization and tasks
+
 ---
 
 ### Health Check
@@ -271,6 +299,20 @@ Note:
 |--------|----------|-------------|
 | GET | `/` | Returns "Hello Hono!" |
 | GET | `/health` | Health check endpoint |
+
+---
+
+## Pagination & Populate
+
+All "get all" endpoints support offset-based pagination:
+
+- **Limit**: 20 items per page
+- **Page Query**: `?page=1` (default: 1)
+- **Offset Formula**: `(page - 1) * limit`
+
+**Populate Query** (optional):
+- `?populate=true` - Populates related fields with full objects
+- For tasks: `?populate=created_by,assigned_to`
 
 ---
 
@@ -283,7 +325,12 @@ Note:
 | `username` | String | Username (required, unique) |
 | `email` | String | Email (required, unique) |
 | `passwordHash` | String | Hashed password (required) |
-| `organization` | ObjectId | Reference to organization |
+| `firstName` | String | First name |
+| `lastName` | String | Last name |
+| `phone` | String | Phone number |
+| `dob` | Date | Date of birth |
+| `interests` | String[] | Array of interests |
+| `address` | String | Address |
 | `created_at` | Date | Creation timestamp |
 | `updated_at` | Date | Last update timestamp |
 
@@ -291,18 +338,12 @@ Note:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `username` | String | Username (required, unique) |
-| `email` | String | Email (required, unique) |
-| `passwordHash` | String | Hashed password (required) |
-| `firstName` | String | First name |
-| `lastName` | String | Last name |
-| `phone` | String | Phone number |
-| `position` | String | Job position |
+| `userId` | ObjectId | Reference to users (required, unique) |
+| `isAdmin` | Boolean | Admin flag (default: false) |
+| `isFounder` | Boolean | Founder flag (default: false) |
 | `department` | String | Department |
-| `organization` | ObjectId | Reference to organization |
-| `role` | Enum | "employee" or "Head" |
-| `profilePicture` | String | Profile image URL |
-| `address` | String | Address |
+| `organization` | ObjectId[] | Array of organization references |
+| `role` | Enum | "employee" or "Head" (default: "employee") |
 | `joiningDate` | Date | Date of joining |
 | `created_at` | Date | Creation timestamp |
 | `updated_at` | Date | Last update timestamp |
@@ -312,7 +353,7 @@ Note:
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | String | Organization name (required) |
-| `founder` | ObjectId | Reference to employee (required) |
+| `founder` | ObjectId | Reference to user (required) |
 | `admin` | ObjectId[] | Array of admin user IDs |
 | `departments` | String[] | List of department names |
 | `created_at` | Date | Creation timestamp |
