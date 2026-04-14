@@ -10,10 +10,10 @@ export async function insertPhase(phase: Record<string, unknown>) {
   return { ...phase, _id: result.insertedId }
 }
 
-export async function findAllPhases() {
+export async function findAllPhases(skip: number = 0, limit: number = 20) {
   const db = getDB()
   const collection = db.collection(PHASE_COLLECTION)
-  return collection.find({}).toArray()
+  return collection.find({}).skip(skip).limit(limit).toArray()
 }
 
 export async function findPhaseById(id: ObjectId) {

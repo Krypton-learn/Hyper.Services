@@ -60,8 +60,8 @@ export async function createOrgsService(input: createOrgInput) {
   return createdOrg
 }
 
-export async function getOrgsService() {
-  return findAllOrgs()
+export async function getOrgsService(skip: number = 0, limit: number = 20) {
+  return findAllOrgs(skip, limit)
 }
 
 export async function getOrgsByIdService(id: string) {

@@ -43,8 +43,8 @@ export async function createPhaseService(input: createPhaseInput) {
   return insertPhase(phase)
 }
 
-export async function getAllPhasesService() {
-  return findAllPhases()
+export async function getAllPhasesService(skip: number = 0, limit: number = 20) {
+  return findAllPhases(skip, limit)
 }
 
 export async function getPhaseByIdService(id: string) {

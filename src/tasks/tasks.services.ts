@@ -92,9 +92,9 @@ export async function createTaskService(input: CreateTaskInput) {
   return insertTask(task)
 }
 
-export async function getAllTaskService(populate?: PopulateOptions) {
+export async function getAllTaskService(populate?: PopulateOptions, skip: number = 0, limit: number = 20) {
   if (!populate) {
-    return findAllTasks()
+    return findAllTasks(skip, limit)
   }
 
   const pipeline: Record<string, unknown>[] = [{ $match: {} }]
@@ -109,7 +109,7 @@ export async function getAllTaskService(populate?: PopulateOptions) {
     pipeline.push(buildUnwindStage('assigned_to_user', true))
   }
 
-  const tasks = await aggregateTasks(pipeline)
+  const tasks = await aggregateTasks(pipeline, skip, limit)
 
   return tasks.map((task) => {
     if (populate.created_by && task.created_by_user) {

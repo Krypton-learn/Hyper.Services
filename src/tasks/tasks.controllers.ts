@@ -58,8 +58,12 @@ export async function createTaskController(c: Context) {
 export async function getAllTaskController(c: Context) {
   try {
     const populate = parsePopulateQuery(c)
-    const tasks = await getAllTaskService(populate)
-    return c.json({ tasks }, 200)
+    const page = parseInt(c.req.query('page') || '1', 10)
+    const limit = 20
+    const skip = (page - 1) * limit
+    
+    const tasks = await getAllTaskService(populate, skip, limit)
+    return c.json({ tasks, page, limit }, 200)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch tasks'
     return c.json({ error: message }, 400)

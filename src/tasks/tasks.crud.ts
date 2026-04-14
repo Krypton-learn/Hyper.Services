@@ -11,16 +11,16 @@ export async function insertTask(task: Record<string, unknown>) {
   return { ...task, _id: result.insertedId }
 }
 
-export async function findAllTasks() {
+export async function findAllTasks(skip: number = 0, limit: number = 20) {
   const db = getDB()
   const collection = db.collection(TASK_COLLECTION)
-  return collection.find({}).toArray()
+  return collection.find({}).skip(skip).limit(limit).toArray()
 }
 
-export async function aggregateTasks(pipeline: Record<string, unknown>[]) {
+export async function aggregateTasks(pipeline: Record<string, unknown>[], skip: number = 0, limit: number = 20) {
   const db = getDB()
   const collection = db.collection(TASK_COLLECTION)
-  return collection.aggregate(pipeline).toArray()
+  return collection.aggregate([...pipeline, { $skip: skip }, { $limit: limit }]).toArray()
 }
 
 export async function findTaskById(id: ObjectId) {

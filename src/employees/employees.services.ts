@@ -45,9 +45,9 @@ export async function createEmployeeService(input: CreateEmployeeInput) {
   return { ...employee, _id: result.insertedId }
 }
 
-export async function getAllEmployeesService() {
+export async function getAllEmployeesService(skip: number = 0, limit: number = 20) {
   const db = getDB()
-  return db.collection(EMPLOYEE_COLLECTION).find({}).toArray()
+  return db.collection(EMPLOYEE_COLLECTION).find({}).skip(skip).limit(limit).toArray()
 }
 
 export async function getEmployeeByIdService(id: string) {
@@ -55,9 +55,9 @@ export async function getEmployeeByIdService(id: string) {
   return db.collection(EMPLOYEE_COLLECTION).findOne({ _id: new ObjectId(id) })
 }
 
-export async function getEmployeesByOrganizationService(organizationId: string) {
+export async function getEmployeesByOrganizationService(organizationId: string, skip: number = 0, limit: number = 20) {
   const db = getDB()
-  return db.collection(EMPLOYEE_COLLECTION).find({ organization: new ObjectId(organizationId) }).toArray()
+  return db.collection(EMPLOYEE_COLLECTION).find({ organization: new ObjectId(organizationId) }).skip(skip).limit(limit).toArray()
 }
 
 export async function updateEmployeeService(id: string, input: UpdateEmployeeInput) {

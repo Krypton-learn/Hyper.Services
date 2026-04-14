@@ -10,10 +10,10 @@ export async function insertOrg(org: Record<string, unknown>) {
   return { ...org, _id: result.insertedId }
 }
 
-export async function findAllOrgs() {
+export async function findAllOrgs(skip: number = 0, limit: number = 20) {
   const db = getDB()
   const collection = db.collection(ORG_COLLECTION)
-  return collection.find({}).toArray()
+  return collection.find({}).skip(skip).limit(limit).toArray()
 }
 
 export async function findOrgById(id: ObjectId) {

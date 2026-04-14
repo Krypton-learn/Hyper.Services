@@ -83,9 +83,13 @@ export async function getAllEmployeesController(c: Context) {
       return c.json({ error: 'User has no organization' }, 403)
     }
 
-    const employees = await getEmployeesByOrganizationService(userOrgId)
+    const page = parseInt(c.req.query('page') || '1', 10)
+    const limit = 20
+    const skip = (page - 1) * limit
 
-    return c.json({ employees }, 200)
+    const employees = await getEmployeesByOrganizationService(userOrgId, skip, limit)
+
+    return c.json({ employees, page, limit }, 200)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch employees'
     return c.json({ error: message }, 400)
