@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { 
+--arcademia-pages-dev-color-1: #F4F3F4; 
+--arcademia-pages-dev-color-2: #9C19F9;
+--arcademia-pages-dev-color-3: #262832; 
+--arcademia-pages-dev-color-4: #F96F0B; 
+--arcademia-pages-dev-color-5: #A399A7; 
+--arcademia-pages-dev-color-6: #69988E; 
+}
