@@ -4,42 +4,35 @@ import { getDB } from '../core/db.core'
 const EMPLOYEE_COLLECTION = 'employees'
 
 export interface CreateEmployeeInput {
-  username: string
-  email: string
-  passwordHash: string
-  firstName?: string
-  lastName?: string
-  phone?: string
-  position?: string
+  userId: string
+  isAdmin?: boolean
+  isFounder?: boolean
   department?: string
-  organization?: string
+  organization?: string[]
   role?: string
-  profilePicture?: string
-  address?: string
   joiningDate?: Date
 }
 
 export interface UpdateEmployeeInput {
-  username?: string
-  email?: string
-  passwordHash?: string
-  firstName?: string
-  lastName?: string
-  phone?: string
-  position?: string
+  userId?: string
+  isAdmin?: boolean
+  isFounder?: boolean
   department?: string
-  organization?: string
+  organization?: string[]
   role?: string
-  profilePicture?: string
-  address?: string
   joiningDate?: Date
 }
 
 export async function createEmployeeService(input: CreateEmployeeInput) {
   const db = getDB()
   const employee = {
-    ...input,
-    organization: input.organization ? new ObjectId(input.organization) : undefined,
+    userId: input.userId ? new ObjectId(input.userId) : undefined,
+    isAdmin: input.isAdmin ?? false,
+    isFounder: input.isFounder ?? false,
+    department: input.department,
+    organization: input.organization ? input.organization.map(id => new ObjectId(id)) : [],
+    role: input.role ?? 'employee',
+    joiningDate: input.joiningDate,
   }
   const result = await db.collection(EMPLOYEE_COLLECTION).insertOne(employee)
   return { ...employee, _id: result.insertedId }
@@ -55,17 +48,54 @@ export async function getEmployeeByIdService(id: string) {
   return db.collection(EMPLOYEE_COLLECTION).findOne({ _id: new ObjectId(id) })
 }
 
-export async function getEmployeesByOrganizationService(organizationId: string, skip: number = 0, limit: number = 20) {
+export async function getEmployeesByOrganizationService(organizationId: string, skip: number = 0, limit: number = 20, populate: boolean = false) {
   const db = getDB()
-  return db.collection(EMPLOYEE_COLLECTION).find({ organization: new ObjectId(organizationId) }).skip(skip).limit(limit).toArray()
+  const employees = await db.collection(EMPLOYEE_COLLECTION)
+    .find({ organization: { $elemMatch: { $eq: new ObjectId(organizationId) } } })
+    .skip(skip)
+    .limit(limit)
+    .toArray()
+  
+  if (populate) {
+    return populateEmployeeFields(employees)
+  }
+  return employees
+}
+
+async function populateEmployeeFields(employees: Record<string, unknown>[]): Promise<Record<string, unknown>[]> {
+  const db = getDB()
+  const userIds = new Set<string>()
+
+  employees.forEach(emp => {
+    if (emp.userId) userIds.add(emp.userId.toString())
+  })
+
+  const users = await db.collection('users')
+    .find({ _id: { $in: Array.from(userIds).map(id => new ObjectId(id)) } })
+    .project({ passwordHash: 0 })
+    .toArray()
+
+  const userMap = new Map(users.map(u => [u._id.toString(), u]))
+
+  return employees.map(emp => {
+    const populated = { ...emp }
+    if (emp.userId) {
+      populated.userId = userMap.get(emp.userId.toString()) || emp.userId
+    }
+    return populated
+  })
 }
 
 export async function updateEmployeeService(id: string, input: UpdateEmployeeInput) {
   const db = getDB()
-  const updateFields: Record<string, unknown> = { ...input }
-  if (input.organization) {
-    updateFields.organization = new ObjectId(input.organization)
-  }
+  const updateFields: Record<string, unknown> = {}
+  if (input.userId) updateFields.userId = new ObjectId(input.userId)
+  if (input.isAdmin !== undefined) updateFields.isAdmin = input.isAdmin
+  if (input.isFounder !== undefined) updateFields.isFounder = input.isFounder
+  if (input.department) updateFields.department = input.department
+  if (input.organization) updateFields.organization = input.organization.map(id => new ObjectId(id))
+  if (input.role) updateFields.role = input.role
+  if (input.joiningDate) updateFields.joiningDate = input.joiningDate
   return db.collection(EMPLOYEE_COLLECTION).findOneAndUpdate(
     { _id: new ObjectId(id) },
     { $set: updateFields },

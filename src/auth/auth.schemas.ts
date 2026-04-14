@@ -16,9 +16,23 @@ export const userSchema = new Schema(
 			type: String,
 			required: true,
 		},
-		organization: {
-			type: Schema.Types.ObjectId,
-			ref: 'organizations',
+		firstName: {
+			type: String,
+		},
+		lastName: {
+			type: String,
+		},
+		phone: {
+			type: String,
+		},
+		dob: {
+			type: Date,
+		},
+		interests: {
+			type: [String],
+		},
+		address: {
+			type: String,
 		},
 	},
 	{

@@ -66,8 +66,9 @@ export async function getAllPhasesController(c: Context) {
     const page = parseInt(c.req.query('page') || '1', 10)
     const limit = 20
     const skip = (page - 1) * limit
+    const populate = c.req.query('populate') === 'true'
     
-    const phases = await getAllPhasesService(skip, limit)
+    const phases = await getAllPhasesService(skip, limit, populate)
     return c.json({ phases, page, limit }, 200)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch phases'

@@ -6,9 +6,8 @@ import {
   deleteOrgById,
   updateOrgById,
 } from './orgs.crud'
-import { updateUserProfileService } from '../auth/auth.serivces'
 import { createEmployeeService } from '../employees/employees.services'
-import { findUserById } from '../auth/auth.crud'
+import { getDB } from '../core/db.core'
 
 export interface createOrgInput {
   name: string
@@ -43,25 +42,55 @@ export async function createOrgsService(input: createOrgInput) {
 
   const createdOrg = await insertOrg(org)
   
-  await updateUserProfileService(input.founder, { organization: createdOrg._id.toString() })
-
-  const founder = await findUserById(input.founder)
-  
-  if (founder) {
-    await createEmployeeService({
-      username: founder.username,
-      email: founder.email,
-      passwordHash: founder.passwordHash,
-      organization: createdOrg._id.toString(),
-      role: 'Head',
-    })
-  }
+  await createEmployeeService({
+    userId: input.founder,
+    isAdmin: true,
+    isFounder: true,
+    organization: [createdOrg._id.toString()],
+    role: 'Head',
+  })
 
   return createdOrg
 }
 
-export async function getOrgsService(skip: number = 0, limit: number = 20) {
-  return findAllOrgs(skip, limit)
+async function populateOrgFields(orgs: Record<string, unknown>[]): Promise<Record<string, unknown>[]> {
+  const db = getDB()
+  const userIds = new Set<string>()
+
+  orgs.forEach(org => {
+    if (org.founder) userIds.add(org.founder.toString())
+    if (org.admin) {
+      (org.admin as unknown as string[]).forEach(id => userIds.add(id.toString()))
+    }
+  })
+
+  const users = await db.collection('users')
+    .find({ _id: { $in: Array.from(userIds).map(id => new ObjectId(id)) } })
+    .project({ passwordHash: 0 })
+    .toArray()
+
+  const userMap = new Map(users.map(u => [u._id.toString(), u]))
+
+  return orgs.map(org => {
+    const populated = { ...org }
+    if (org.founder) {
+      populated.founder = userMap.get(org.founder.toString()) || org.founder
+    }
+    if (org.admin) {
+      populated.admin = (org.admin as unknown as string[]).map(id => 
+        userMap.get(id.toString()) || id
+      )
+    }
+    return populated
+  })
+}
+
+export async function getOrgsService(skip: number = 0, limit: number = 20, populate: boolean = false) {
+  const orgs = await findAllOrgs(skip, limit)
+  if (populate) {
+    return populateOrgFields(orgs as unknown as Record<string, unknown>[])
+  }
+  return orgs
 }
 
 export async function getOrgsByIdService(id: string) {

@@ -49,8 +49,9 @@ export async function getAllOrgController(c: Context) {
     const page = parseInt(c.req.query('page') || '1', 10)
     const limit = 20
     const skip = (page - 1) * limit
+    const populate = c.req.query('populate') === 'true'
     
-    const orgs = await getOrgsService(skip, limit)
+    const orgs = await getOrgsService(skip, limit, populate)
     return c.json({ orgs, page, limit }, 200)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch organizations'

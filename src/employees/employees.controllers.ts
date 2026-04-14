@@ -56,7 +56,7 @@ export async function createEmployeeController(c: Context) {
 
     const employee = await createEmployeeService({
       ...validated.data,
-      organization: userOrgId,
+      organization: [userOrgId],
     })
 
     return c.json({ message: 'Employee created successfully', employee }, 201)
@@ -86,8 +86,9 @@ export async function getAllEmployeesController(c: Context) {
     const page = parseInt(c.req.query('page') || '1', 10)
     const limit = 20
     const skip = (page - 1) * limit
+    const populate = c.req.query('populate') === 'true'
 
-    const employees = await getEmployeesByOrganizationService(userOrgId, skip, limit)
+    const employees = await getEmployeesByOrganizationService(userOrgId, skip, limit, populate)
 
     return c.json({ employees, page, limit }, 200)
   } catch (error) {

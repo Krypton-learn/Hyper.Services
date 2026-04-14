@@ -2,6 +2,7 @@ import type { Context } from 'hono'
 import { registerUserService, loginUserService } from './auth.serivces'
 import { registerSchema, loginSchema } from './auth.validators'
 import { setCookie } from 'hono/cookie'
+import { decodeJWT, createJWT } from './auth.helpers'
 
 export async function registerUserController(c: Context) {
   try {
@@ -15,9 +16,19 @@ export async function registerUserController(c: Context) {
       )
     }
 
-    const { username, email, password } = validated.data
+    const { username, email, password, firstName, lastName, phone, dob, interests, address } = validated.data
 
-    const userId = await registerUserService(username, email, password)
+    const userId = await registerUserService({
+      username,
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      dob: dob ? new Date(dob) : undefined,
+      interests,
+      address,
+    })
 
     return c.json(
       { message: 'User registered successfully', userId },
@@ -56,6 +67,28 @@ export async function loginUserController(c: Context) {
     )
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Login failed'
+    return c.json({ error: message }, 401)
+  }
+}
+
+export async function refreshTokenController(c: Context) {
+  try {
+    const refreshToken = c.req.cookie('refresh_token')
+
+    if (!refreshToken) {
+      return c.json({ error: 'Refresh token not found' }, 401)
+    }
+
+    const decoded = await decodeJWT(refreshToken)
+    if (!decoded || !decoded.userId) {
+      return c.json({ error: 'Invalid refresh token' }, 401)
+    }
+
+    const accessToken = await createJWT({ userId: decoded.userId }, 15 * 60)
+
+    return c.json({ accessToken }, 200)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to refresh token'
     return c.json({ error: message }, 401)
   }
 }

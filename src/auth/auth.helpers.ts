@@ -1,6 +1,13 @@
 import { sign, verify } from 'hono/jwt'
 import { env } from '../core/env.core'
 
+export interface JWTPayload {
+  userId: string
+  email?: string
+  organization?: string
+  role?: string
+}
+
 export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(password)

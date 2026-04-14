@@ -6,6 +6,7 @@ import {
   deletePhaseById,
   updatePhaseById,
 } from './phases.crud'
+import { getDB } from '../core/db.core'
 
 export interface createPhaseInput {
   name: string
@@ -43,8 +44,46 @@ export async function createPhaseService(input: createPhaseInput) {
   return insertPhase(phase)
 }
 
-export async function getAllPhasesService(skip: number = 0, limit: number = 20) {
-  return findAllPhases(skip, limit)
+async function populatePhaseFields(phases: Record<string, unknown>[]): Promise<Record<string, unknown>[]> {
+  const db = getDB()
+  const orgIds = new Set<string>()
+  const taskIds = new Set<string>()
+
+  phases.forEach(phase => {
+    if (phase.organization) orgIds.add(phase.organization.toString())
+    if (phase.tasks) {
+      (phase.tasks as unknown as string[]).forEach(id => taskIds.add(id.toString()))
+    }
+  })
+
+  const [organizations, tasks] = await Promise.all([
+    db.collection('organizations').find({ _id: { $in: Array.from(orgIds).map(id => new ObjectId(id)) } }).toArray(),
+    db.collection('tasks').find({ _id: { $in: Array.from(taskIds).map(id => new ObjectId(id)) } }).toArray(),
+  ])
+
+  const orgMap = new Map(organizations.map(o => [o._id.toString(), o]))
+  const taskMap = new Map(tasks.map(t => [t._id.toString(), t]))
+
+  return phases.map(phase => {
+    const populated = { ...phase }
+    if (phase.organization) {
+      populated.organization = orgMap.get(phase.organization.toString()) || phase.organization
+    }
+    if (phase.tasks) {
+      populated.tasks = (phase.tasks as unknown as string[]).map(id =>
+        taskMap.get(id.toString()) || id
+      )
+    }
+    return populated
+  })
+}
+
+export async function getAllPhasesService(skip: number = 0, limit: number = 20, populate: boolean = false) {
+  const phases = await findAllPhases(skip, limit)
+  if (populate) {
+    return populatePhaseFields(phases as unknown as Record<string, unknown>[])
+  }
+  return phases
 }
 
 export async function getPhaseByIdService(id: string) {
