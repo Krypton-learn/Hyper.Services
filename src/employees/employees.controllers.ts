@@ -10,7 +10,7 @@ import {
 import {
   createEmployeeValidator,
   updateEmployeeValidator,
-} from './employees.validators'
+} from 'packages/schemas'
 import {
   getUserIdFromToken,
   getUserOrganizationId,

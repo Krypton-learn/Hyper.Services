@@ -7,27 +7,10 @@ import {
   updatePhaseById,
 } from './phases.crud'
 import { getDB } from '../core/db.core'
+import type { createPhaseInput, updatePhaseInput } from 'packages/schemas'
 
-export interface createPhaseInput {
-  name: string
-  description?: string
-  tasks?: string[]
-  budget?: number
-  starting_date?: Date
-  ending_date?: Date
-  sops?: string[]
-  organization: string
-}
-
-export interface updatePhaseInput {
-  name?: string
-  description?: string
-  tasks?: string[]
-  budget?: number
-  starting_date?: Date
-  ending_date?: Date
-  sops?: string[]
-}
+export type CreatePhaseInput = createPhaseInput
+export type UpdatePhaseInput = updatePhaseInput
 
 export async function createPhaseService(input: createPhaseInput) {
   const phase = {

@@ -10,7 +10,7 @@ import {
   createOrgSchema,
   updateOrgSchema,
   orgIdSchema,
-} from './orgs.validators'
+} from 'packages/schemas'
 import { getUserIdFromToken } from './orgs.helpers'
 
 export async function createOrgController(c: Context) {

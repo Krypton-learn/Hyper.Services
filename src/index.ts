@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 import { connectDB } from './core/db.core'
 import { authRoutes } from './auth/auth.routes'
 import { taskRoutes } from './tasks/tasks.routes'
@@ -7,6 +8,12 @@ import { phaseRoutes } from './phases/phases.routes'
 import { employeeRoutes } from './employees/employees.routes'
 
 export const app = new Hono()
+
+app.use('*', cors({
+  origin: '*',
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+}))
 
 connectDB().catch(console.error)
 

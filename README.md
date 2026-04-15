@@ -58,6 +58,15 @@ src/
 │   ├── db.core.ts      # MongoDB connection
 │   └── env.core.ts     # Environment variables
 └── index.ts            # App entry point
+
+packages/
+└── schemas/            # Shared Zod schemas (used by frontend)
+    ├── auth.validators.ts
+    ├── tasks.validators.ts
+    ├── employees.validators.ts
+    ├── organizations.validators.ts
+    ├── phases.validators.ts
+    └── index.ts
 ```
 
 ## Local Development Setup
@@ -129,7 +138,7 @@ Request:
   "firstName": "John",
   "lastName": "Doe",
   "phone": "+1234567890",
-  "dob": "1990-01-01T00:00:00Z",
+  "dob": "1990-01-01",
   "interests": ["coding", "reading"],
   "address": "123 Main St"
 }
@@ -141,11 +150,17 @@ Response:
 }
 ```
 
-#### Login
+#### Login (accepts email or username)
 ```json
 Request:
 {
-  "email": "john@example.com",
+  "identifier": "john@example.com",
+  "password": "password123"
+}
+
+# OR using username:
+{
+  "identifier": "john",
   "password": "password123"
 }
 
@@ -162,92 +177,6 @@ A `refresh_token` cookie is also set (httpOnly, 7 days).
 POST /api/auth/refresh
 ```
 Reads `refresh_token` from cookie and returns a new access token.
-
-```json
-Response:
-{
-  "accessToken": "..."
-}
-```
-
----
-
-### Employees (`/api/employees`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/employees/create` | Create a new employee | Yes |
-| GET | `/api/employees/get/all` | Get all employees in org | Yes |
-| GET | `/api/employees/get/:id` | Get employee by ID | Yes |
-| PATCH | `/api/employees/edit/:id` | Update employee | Yes |
-| DELETE | `/api/employees/delete/:id` | Delete employee | Yes |
-
-#### Get All Employees
-```
-GET /api/employees/get/all?page=1&populate=true
-```
-
-Query Parameters:
-- `page` - Page number (default: 1)
-- `populate` - Set to `true` to populate user data
-
-Response:
-```json
-{
-  "employees": [...],
-  "page": 1,
-  "limit": 20
-}
-```
-
-#### Create Employee
-```
-Authorization: Bearer <access_token>
-
-POST /api/employees/create
-```
-```json
-Request:
-{
-  "userId": "...",
-  "isAdmin": false,
-  "isFounder": false,
-  "department": "Engineering",
-  "role": "employee"
-}
-```
-
-Note: Only organization founder or admin can create employees. The organization is automatically assigned from the authenticated user's organization.
-
----
-
-### Organizations (`/api/orgs`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/orgs/create` | Create a new organization | Yes |
-| GET | `/api/orgs/get/all` | Get all organizations | No |
-| GET | `/api/orgs/get/:id` | Get organization by ID | No |
-| PATCH | `/api/orgs/edit/:id` | Update organization | Yes |
-| DELETE | `/api/orgs/delete/:id` | Delete organization | Yes |
-
-#### Get All Organizations
-```
-GET /api/orgs/get/all?page=1&populate=true
-```
-
-Query Parameters:
-- `page` - Page number (default: 1)
-- `populate` - Set to `true` to populate founder and admin user data
-
-Response:
-```json
-{
-  "orgs": [...],
-  "page": 1,
-  "limit": 20
-}
-```
 
 ---
 
@@ -274,6 +203,51 @@ Query Parameters:
 - `page` - Page number (default: 1)
 - `populate` - Comma-separated fields to populate (`created_by`, `assigned_to`)
 
+The populate query performs a lookup from the employees collection to get user details (firstName, lastName, username).
+
+#### Create Task
+```json
+Request:
+{
+  "title": "Task title",
+  "description": "Task description",
+  "assigned_to": "employee_id (optional)",
+  "due_date": "2026-04-20",
+  "priority": "High",
+  "status": "Due"
+}
+
+Response:
+{
+  "message": "Task created successfully",
+  "task": { ... }
+}
+```
+
+---
+
+### Employees (`/api/employees`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/employees/create` | Create a new employee | Yes |
+| GET | `/api/employees/get/all` | Get all employees in org | Yes |
+| GET | `/api/employees/get/:id` | Get employee by ID | Yes |
+| PATCH | `/api/employees/edit/:id` | Update employee | Yes |
+| DELETE | `/api/employees/delete/:id` | Delete employee | Yes |
+
+---
+
+### Organizations (`/api/orgs`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/orgs/create` | Create a new organization | Yes |
+| GET | `/api/orgs/get/all` | Get all organizations | No |
+| GET | `/api/orgs/get/:id` | Get organization by ID | No |
+| PATCH | `/api/orgs/edit/:id` | Update organization | Yes |
+| DELETE | `/api/orgs/delete/:id` | Delete organization | Yes |
+
 ---
 
 ### Phases (`/api/phases`)
@@ -286,15 +260,6 @@ Query Parameters:
 | PATCH | `/api/phases/edit/:id` | Update phase | Yes |
 | DELETE | `/api/phases/delete/:id` | Delete phase | Yes |
 
-#### Get All Phases
-```
-GET /api/phases/get/all?page=1&populate=true
-```
-
-Query Parameters:
-- `page` - Page number (default: 1)
-- `populate` - Set to `true` to populate organization and tasks
-
 ---
 
 ### Health Check
@@ -306,93 +271,28 @@ Query Parameters:
 
 ---
 
-## Pagination & Populate
+## Zod Schemas
 
-All "get all" endpoints support offset-based pagination:
+The backend uses shared Zod schemas located in `packages/schemas/`:
 
-- **Limit**: 20 items per page
-- **Page Query**: `?page=1` (default: 1)
-- **Offset Formula**: `(page - 1) * limit`
-
-**Populate Query** (optional):
-- `?populate=true` - Populates related fields with full objects
-- For tasks: `?populate=created_by,assigned_to`
+| Schema | Fields |
+|--------|--------|
+| `registerSchema` | username, email, password, firstName, lastName, phone, dob, interests, address |
+| `loginSchema` | identifier (email or username), password |
+| `createTaskSchema` | title, created_by, assigned_to, starting_date, due_date, status, team, phase, description, priority |
+| `updateTaskSchema` | Optional versions of createTaskSchema fields |
+| `createOrgSchema` | name, founder, admin, departments |
+| `createEmployeeSchema` | userId, isAdmin, isFounder, department, organization, role, joiningDate |
 
 ---
 
-## Database Schemas
+## Environment Variables
 
-### Users Schema (auth.schemas.ts)
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `username` | String | Username (required, unique) |
-| `email` | String | Email (required, unique) |
-| `passwordHash` | String | Hashed password (required) |
-| `firstName` | String | First name |
-| `lastName` | String | Last name |
-| `phone` | String | Phone number |
-| `dob` | Date | Date of birth |
-| `interests` | String[] | Array of interests |
-| `address` | String | Address |
-| `created_at` | Date | Creation timestamp |
-| `updated_at` | Date | Last update timestamp |
-
-### Employees Schema (employees.schema.ts)
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `userId` | ObjectId | Reference to users (required, unique) |
-| `isAdmin` | Boolean | Admin flag (default: false) |
-| `isFounder` | Boolean | Founder flag (default: false) |
-| `department` | String | Department |
-| `organization` | ObjectId[] | Array of organization references |
-| `role` | Enum | "employee" or "Head" (default: "employee") |
-| `joiningDate` | Date | Date of joining |
-| `created_at` | Date | Creation timestamp |
-| `updated_at` | Date | Last update timestamp |
-
-### Organizations Schema (orgs.schema.ts)
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `name` | String | Organization name (required) |
-| `founder` | ObjectId | Reference to user (required) |
-| `admin` | ObjectId[] | Array of admin user IDs |
-| `departments` | String[] | List of department names |
-| `created_at` | Date | Creation timestamp |
-| `updated_at` | Date | Last update timestamp |
-
-### Tasks Schema (tasks.schemas.ts)
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `title` | String | Task title (required) |
-| `created_by` | ObjectId | Reference to employee |
-| `assigned_to` | ObjectId | Assigned employee |
-| `starting_date` | Date | Task start date |
-| `due_date` | Date | Task due date |
-| `status` | Enum | "Due", "Upcoming", "Completed" |
-| `team` | ObjectId[] | Team members |
-| `phase` | ObjectId | Reference to phase |
-| `tempTeamMembers` | ObjectId[] | Pending team invitations |
-| `description` | String | Task description |
-| `priority` | Enum | "Low", "Medium", "High", "Urgent" |
-
-### Phases Schema (phases.schema.ts)
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `name` | String | Phase name (required) |
-| `description` | String | Phase description |
-| `tasks` | ObjectId[] | References to tasks |
-| `budget` | Number | Phase budget |
-| `starting_date` | Date | Phase start date |
-| `ending_date` | Date | Phase end date |
-| `sops` | ObjectId[] | References to SOP documents |
-| `organization` | ObjectId | Reference to organization (required) |
-| `created_at` | Date | Creation timestamp |
-| `updated_at` | Date | Last update timestamp |
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `MONGO_URI` | MongoDB connection string | Yes |
+| `DB_NAME` | Database name | Yes |
+| `JWT_SECRET` | Secret for JWT signing | Yes |
 
 ---
 
@@ -425,13 +325,3 @@ wrangler tail
 ```
 
 Visit your Workers URL (e.g., `https://your-project.workers.dev/health`)
-
----
-
-## Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `MONGO_URI` | MongoDB connection string | Yes |
-| `DB_NAME` | Database name | Yes |
-| `JWT_SECRET` | Secret for JWT signing | Yes |

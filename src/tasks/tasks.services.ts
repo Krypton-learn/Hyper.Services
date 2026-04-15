@@ -9,35 +9,9 @@ import {
   deleteTaskById,
   updateTaskById,
 } from './tasks.crud'
+import type { CreateTaskInput, UpdateTaskInput } from 'packages/schemas'
 
 const DEFAULT_ASSIGNED_TO = '69dc781521409728aa1a84b1'
-
-export interface CreateTaskInput {
-  title: string
-  created_by: string
-  assigned_to?: string
-  starting_date?: Date
-  due_date?: Date
-  status?: 'Due' | 'Upcoming' | 'Completed'
-  team?: string[]
-  phase?: string
-  tempTeamMembers?: string[]
-  description?: string
-  priority?: 'Low' | 'Medium' | 'High' | 'Urgent'
-}
-
-export interface UpdateTaskInput {
-  title?: string
-  assigned_to?: string
-  starting_date?: Date
-  due_date?: Date
-  status?: 'Due' | 'Upcoming' | 'Completed'
-  team?: string[]
-  phase?: string
-  tempTeamMembers?: string[]
-  description?: string
-  priority?: 'Low' | 'Medium' | 'High' | 'Urgent'
-}
 
 export interface PopulateOptions {
   created_by?: boolean
@@ -100,12 +74,30 @@ export async function getAllTaskService(populate?: PopulateOptions, skip: number
   const pipeline: Record<string, unknown>[] = [{ $match: {} }]
 
   if (populate.created_by) {
-    pipeline.push(buildLookupStage('created_by', 'created_by_user'))
+    pipeline.push(buildLookupStage('created_by', 'created_by_employee'))
+    pipeline.push(buildUnwindStage('created_by_employee', true))
+    pipeline.push({
+      $lookup: {
+        from: 'users',
+        localField: 'created_by_employee.userId',
+        foreignField: '_id',
+        as: 'created_by_user',
+      },
+    })
     pipeline.push(buildUnwindStage('created_by_user', true))
   }
 
   if (populate.assigned_to) {
-    pipeline.push(buildLookupStage('assigned_to', 'assigned_to_user'))
+    pipeline.push(buildLookupStage('assigned_to', 'assigned_to_employee'))
+    pipeline.push(buildUnwindStage('assigned_to_employee', true))
+    pipeline.push({
+      $lookup: {
+        from: 'users',
+        localField: 'assigned_to_employee.userId',
+        foreignField: '_id',
+        as: 'assigned_to_user',
+      },
+    })
     pipeline.push(buildUnwindStage('assigned_to_user', true))
   }
 
@@ -115,11 +107,13 @@ export async function getAllTaskService(populate?: PopulateOptions, skip: number
     if (populate.created_by && task.created_by_user) {
       const { passwordHash, ...user } = task.created_by_user
       task.created_by = user
+      delete task.created_by_employee
       delete task.created_by_user
     }
     if (populate.assigned_to && task.assigned_to_user) {
       const { passwordHash, ...user } = task.assigned_to_user
       task.assigned_to = user
+      delete task.assigned_to_employee
       delete task.assigned_to_user
     }
     return task

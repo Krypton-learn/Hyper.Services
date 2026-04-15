@@ -2,6 +2,16 @@ import { createRouter, createRootRoute, createRoute } from '@tanstack/react-rout
 import { RootComponent } from './rootComponent'
 import { LoginPage } from './pages/auth/login.pages'
 import { SignUpPage } from './pages/auth/signup.pages'
+import { InterestsPage } from './pages/auth/interests.pages'
+import { ProfilePage } from './pages/profile.pages'
+import { TasksPage } from './pages/tasks.pages'
+import type { RegisterInput } from './lib/types'
+
+declare module '@tanstack/react-router' {
+  interface HistoryState {
+    signupData?: RegisterInput;
+  }
+}
 
 const rootRoute = createRootRoute({
   component: RootComponent,
@@ -31,6 +41,12 @@ const signupRoute = createRoute({
   component: SignUpPage,
 })
 
+const interestsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/interests',
+  component: InterestsPage,
+})
+
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dashboard',
@@ -43,7 +59,19 @@ const dashboardRoute = createRoute({
   },
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, loginRoute, signupRoute, dashboardRoute])
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/profile',
+  component: ProfilePage,
+})
+
+const tasksRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/tasks',
+  component: TasksPage,
+})
+
+const routeTree = rootRoute.addChildren([indexRoute, loginRoute, signupRoute, interestsRoute, dashboardRoute, profileRoute, tasksRoute])
 
 export const router = createRouter({ routeTree })
 

@@ -10,6 +10,10 @@
     ],
     "types": ["bun"],
     "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx"
+    "jsxImportSource": "hono/jsx",
+    "paths": {
+      "packages/schemas": ["./packages/schemas"],
+      "packages/schemas/*": ["./packages/schemas/*"]
+    }
   },
 }

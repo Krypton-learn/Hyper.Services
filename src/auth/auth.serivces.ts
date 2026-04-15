@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 import { hashPassword, verifyPassword, createJWT } from './auth.helpers'
-import { findUserByUsernameOrEmail, createUser, findUserByEmail, updateUserById } from './auth.crud'
+import { findUserByUsernameOrEmail, createUser, findUserByUsernameOrEmailForLogin, updateUserById } from './auth.crud'
 
 export interface RegisterUserInput {
   username: string
@@ -44,18 +44,18 @@ export async function registerUserService(input: RegisterUserInput) {
   }
 }
 
-export async function loginUserService(email: string, password: string) {
+export async function loginUserService(identifier: string, password: string) {
   try {
-    const user = await findUserByEmail(email)
+    const user = await findUserByUsernameOrEmailForLogin(identifier)
 
     if (!user) {
-      throw new Error('Invalid email or password')
+      throw new Error('Invalid email/username or password')
     }
 
     const isValid = await verifyPassword(password, user.passwordHash)
 
     if (!isValid) {
-      throw new Error('Invalid email or password')
+      throw new Error('Invalid email/username or password')
     }
 
     const accessToken = await createJWT({ userId: user._id.toString() }, 15 * 60)

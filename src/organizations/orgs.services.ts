@@ -8,20 +8,10 @@ import {
 } from './orgs.crud'
 import { createEmployeeService } from '../employees/employees.services'
 import { getDB } from '../core/db.core'
+import type { createOrgInput, updateOrgInput } from 'packages/schemas'
 
-export interface createOrgInput {
-  name: string
-  founder: string
-  admin?: string[]
-  departments?: string[]
-}
-
-export interface updateOrgInput {
-  name?: string
-  founder?: string
-  admin?: string[]
-  departments?: string[]
-}
+export type CreateOrgInput = createOrgInput
+export type UpdateOrgInput = updateOrgInput
 
 export async function createOrgsService(input: createOrgInput) {
   const founderId = new ObjectId(input.founder)

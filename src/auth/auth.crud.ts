@@ -9,6 +9,14 @@ export async function findUserByEmail(email: string) {
   return collection.findOne({ email })
 }
 
+export async function findUserByUsernameOrEmailForLogin(identifier: string) {
+  const db = getDB()
+  const collection = db.collection(collectionName)
+  return collection.findOne({
+    $or: [{ email: identifier }, { username: identifier }],
+  })
+}
+
 export async function findUserByUsernameOrEmail(username: string, email: string) {
   const db = getDB()
   const collection = db.collection(collectionName)

@@ -10,7 +10,7 @@ import {
   createPhaseSchema,
   updatePhaseSchema,
   phaseIdSchema,
-} from './phases.validators'
+} from 'packages/schemas'
 import { getUserIdFromToken } from './phases.helpers'
 import { getOrgsByIdService } from '../organizations/orgs.services'
 

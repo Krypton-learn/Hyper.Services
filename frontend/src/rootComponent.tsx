@@ -1,7 +1,11 @@
 import { Outlet } from '@tanstack/react-router'
+import { Toaster } from 'sonner'
 
 export function RootComponent() {
   return (
-    <Outlet />
+    <>
+      <Toaster position="top-center" />
+      <Outlet />
+    </>
   )
 }

@@ -108,9 +108,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
 );
 Select.displayName = 'Select';
 
-const getButtonClasses = (variant: FormButton['variant'] = 'primary', size: FormButton['size'] = 'md', disabled?: boolean) => {
+const getButtonClasses = (variant: FormButton['variant'] = 'primary', size: FormButton['size'] = 'md', _disabled?: boolean) => {
   const baseClasses = 'inline-flex items-center justify-center font-medium text-base transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed';
-  
+
   const variants = {
     primary: 'bg-primary text-white hover:bg-primary/90',
     secondary: 'bg-secondary text-white hover:bg-secondary/90',
@@ -147,6 +147,7 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
     const [formData, setFormData] = React.useState<Record<string, unknown>>(initialValues);
     const [errors, setErrors] = React.useState<Record<string, string>>({});
     const [touched, setTouched] = React.useState<Record<string, boolean>>({});
+    const [showPassword, setShowPassword] = React.useState<Record<string, boolean>>({});
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const { name, value, type } = e.target;
@@ -203,6 +204,10 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
       return error;
     };
 
+    const togglePasswordVisibility = (fieldName: string) => {
+      setShowPassword((prev) => ({ ...prev, [fieldName]: !prev[fieldName] }));
+    };
+
     const validateAll = () => {
       const newErrors: Record<string, string> = {};
       let isValid = true;
@@ -221,7 +226,7 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      
+
       const allTouched: Record<string, boolean> = {};
       fields.forEach((field) => {
         allTouched[field.name] = true;
@@ -382,11 +387,11 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
                   {field.required && <span className="text-red-500 ml-0.5"></span>}
                 </label>
               )}
-              <div className={layout === 'horizontal' ? 'flex-1' : ''}>
+              <div className={layout === 'horizontal' ? 'flex-1 relative' : 'relative'}>
                 <Input
                   id={uniqueId}
                   name={field.name}
-                  type={field.type}
+                  type={field.type === 'password' ? (showPassword[field.name] ? 'text' : 'password') : field.type}
                   placeholder={showPlaceholders ? field.placeholder : undefined}
                   required={field.required}
                   disabled={field.disabled}
@@ -394,13 +399,34 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
                   onChange={handleChange}
                   onBlur={() => handleBlur(field.name)}
                   hasError={hasError}
-                  className={field.className}
+                  className={field.type === 'password' ? 'pr-10' : field.className}
                   min={field.validation?.min}
                   max={field.validation?.max}
                   minLength={field.validation?.minLength}
                   maxLength={field.validation?.maxLength}
                   pattern={field.validation?.pattern}
                 />
+                {field.type === 'password' && (
+                  <div className="absolute right-3 top-0 bottom-0 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility(field.name)}
+                      className="text-muted hover:text-foreground transition-colors"
+                    >
+                      {showPassword[field.name] ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.72a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                )}
                 {hasError && <p className={errorClassName}>{error}</p>}
                 {!hasError && field.helperText && <p className={helperClassName}>{field.helperText}</p>}
               </div>
@@ -409,8 +435,8 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
       }
     };
 
-    const containerClass = layout === 'horizontal' 
-      ? 'flex flex-wrap gap-x-6 gap-y-5' 
+    const containerClass = layout === 'horizontal'
+      ? 'flex flex-wrap gap-x-6 gap-y-5'
       : 'space-y-6';
 
     return (

@@ -1,6 +1,7 @@
-import { Form } from '../../components/form.component';
-import FormButton from '../../components/form.component';
-import FormField from '../../components/form.component';
+import { Form, type FormField, type FormButton } from '../../components/form.component';
+import { useLogin } from '../../hooks/useLogin';
+import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
 
 const loginFields: FormField[] = [
   {
@@ -24,31 +25,49 @@ const loginFields: FormField[] = [
   },
 ];
 
-const loginButtons: FormButton[] = [
-  {
-    type: 'submit',
-    label: 'Sign In',
-    variant: 'primary',
-    size: 'md',
-  },
-  {
-    type: 'reset',
-    label: 'Clear',
-    variant: 'outline',
-    size: 'md',
-  },
-];
-
 export const LoginPage = () => {
-  const handleLogin = (data: Record<string, unknown>) => {
-    console.log('Login data:', data);
+  const navigate = useNavigate();
+  const loginMutation = useLogin();
+
+  const handleLogin = async (data: Record<string, unknown>) => {
+    const identifier = data.identifier as string;
+    const password = data.password as string;
+
+    try {
+      await loginMutation.mutateAsync({ identifier, password });
+      toast.success('Login successful!');
+      navigate({ to: '/dashboard' });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      toast.error(message);
+    }
   };
+
+  const buttons: FormButton[] = [
+    {
+      type: 'submit',
+      label: loginMutation.isPending ? 'Signing in...' : 'Sign In',
+      variant: 'primary',
+      size: 'md',
+      disabled: loginMutation.isPending,
+    },
+    {
+      type: 'reset',
+      label: 'Clear',
+      variant: 'outline',
+      size: 'md',
+      disabled: loginMutation.isPending,
+    },
+  ];
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/5 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <h1 className="text-5xl font-bold text-primary">Arcademia</h1>
+          <div className="flex justify-center mb-2">
+            <img src="/arcademia.svg" alt="Arcademia" className="w-20 h-20" />
+          </div>
+          <p className="text-xs text-muted mt-1">Arcademia Services</p>
           <h2 className="text-xl font-medium text-foreground mt-4">Welcome Back</h2>
           <p className="text-sm text-muted mt-1">Sign in to your account</p>
         </div>
@@ -56,7 +75,7 @@ export const LoginPage = () => {
           title=""
           description=""
           fields={loginFields}
-          buttons={loginButtons}
+          buttons={buttons}
           onSubmit={handleLogin}
         />
         <div className="mt-4 text-center">

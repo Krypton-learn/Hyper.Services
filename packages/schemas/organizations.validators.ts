@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const createOrgSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  founder: z.string().min(1, 'Founder is required').optional(),
+  founder: z.string().min(1, 'Founder is required'),
   admin: z.array(z.string()).optional(),
   departments: z.array(z.string()).optional(),
 })

@@ -1,6 +1,6 @@
 import type { Context } from 'hono'
 import { registerUserService, loginUserService } from './auth.serivces'
-import { registerSchema, loginSchema } from './auth.validators'
+import { registerSchema, loginSchema } from 'packages/schemas/auth.validators'
 import { setCookie } from 'hono/cookie'
 import { decodeJWT, createJWT } from './auth.helpers'
 
@@ -49,9 +49,9 @@ export async function loginUserController(c: Context) {
       return c.json({ error: validated.error }, 400)
     }
 
-    const { email, password } = validated.data
+    const { identifier, password } = validated.data
 
-    const loginData = await loginUserService(email, password)
+    const loginData = await loginUserService(identifier, password)
 
     setCookie(c, 'refresh_token', loginData.refreshToken, {
       httpOnly: true,

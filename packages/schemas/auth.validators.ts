@@ -7,13 +7,13 @@ export const registerSchema = z.object({
 	firstName: z.string().optional(),
 	lastName: z.string().optional(),
 	phone: z.string().optional(),
-	dob: z.string().datetime().optional(),
+	dob: z.string().optional(),
 	interests: z.array(z.string()).optional(),
 	address: z.string().optional(),
 })
 
 export const loginSchema = z.object({
-	email: z.string().email(),
+	identifier: z.string().min(1, 'Email or username is required'),
 	password: z.string().min(1),
 })
 
@@ -21,7 +21,7 @@ export const updateUserProfileSchema = z.object({
 	firstName: z.string().optional(),
 	lastName: z.string().optional(),
 	phone: z.string().optional(),
-	dob: z.string().datetime().optional(),
+	dob: z.string().optional(),
 	interests: z.array(z.string()).optional(),
 	address: z.string().optional(),
 	organization: z.string().optional(),

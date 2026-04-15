@@ -11,7 +11,7 @@ import {
   createTaskSchema,
   updateTaskSchema,
   taskIdSchema,
-} from './tasks.validators'
+} from 'packages/schemas'
 import { getUserIdFromToken } from './tasks.helpers'
 
 function parsePopulateQuery(c: Context): PopulateOptions | undefined {

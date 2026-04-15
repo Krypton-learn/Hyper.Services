@@ -1,27 +1,11 @@
 import { ObjectId } from 'mongodb'
 import { getDB } from '../core/db.core'
+import type { CreateEmployeeDto, UpdateEmployeeDto } from 'packages/schemas'
 
 const EMPLOYEE_COLLECTION = 'employees'
 
-export interface CreateEmployeeInput {
-  userId: string
-  isAdmin?: boolean
-  isFounder?: boolean
-  department?: string
-  organization?: string[]
-  role?: string
-  joiningDate?: Date
-}
-
-export interface UpdateEmployeeInput {
-  userId?: string
-  isAdmin?: boolean
-  isFounder?: boolean
-  department?: string
-  organization?: string[]
-  role?: string
-  joiningDate?: Date
-}
+export type CreateEmployeeInput = CreateEmployeeDto
+export type UpdateEmployeeInput = UpdateEmployeeDto & { userId?: string }
 
 export async function createEmployeeService(input: CreateEmployeeInput) {
   const db = getDB()

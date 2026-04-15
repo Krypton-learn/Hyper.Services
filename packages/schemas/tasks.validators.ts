@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const createTaskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  created_by: z.string().min(1, 'Created by is required'),
+  created_by: z.string().optional(),
   assigned_to: z.string().optional(),
   starting_date: z.coerce.date().optional(),
   due_date: z.coerce.date().optional(),
