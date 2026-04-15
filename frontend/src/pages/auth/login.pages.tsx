@@ -1,7 +1,7 @@
 import { Form, type FormField, type FormButton } from '../../components/form.component';
 import { useLogin } from '../../hooks/useLogin';
-import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
+import { useNavigate } from '@tanstack/react-router';
 
 const loginFields: FormField[] = [
   {
@@ -26,8 +26,8 @@ const loginFields: FormField[] = [
 ];
 
 export const LoginPage = () => {
-  const navigate = useNavigate();
   const loginMutation = useLogin();
+  const navigate = useNavigate();
 
   const handleLogin = async (data: Record<string, unknown>) => {
     const identifier = data.identifier as string;

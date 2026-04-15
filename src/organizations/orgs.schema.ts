@@ -10,7 +10,11 @@ export const orgSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'employees',
       required: true,
-    }
+    },
+    employees: [{
+      type: Schema.Types.ObjectId,
+      ref: 'employees',
+    }],
   },
   {
     collection: 'organizations',

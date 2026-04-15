@@ -14,6 +14,10 @@ export type CreateOrgInput = createOrgInput
 export type UpdateOrgInput = updateOrgInput
 
 export async function createOrgsService(input: createOrgInput) {
+  if (!input.founder) {
+    throw new Error('Founder is required')
+  }
+  
   const founderId = new ObjectId(input.founder)
   const adminIds = input.admin
     ? input.admin.map((id) => new ObjectId(id))
@@ -27,6 +31,7 @@ export async function createOrgsService(input: createOrgInput) {
     name: input.name,
     founder: founderId,
     admin: adminIds,
+    employees: [founderId],
     departments: input.departments || [],
   }
 
@@ -46,11 +51,18 @@ export async function createOrgsService(input: createOrgInput) {
 async function populateOrgFields(orgs: Record<string, unknown>[]): Promise<Record<string, unknown>[]> {
   const db = getDB()
   const userIds = new Set<string>()
+  const employeeIds = new Set<string>()
 
   orgs.forEach(org => {
     if (org.founder) userIds.add(org.founder.toString())
     if (org.admin) {
       (org.admin as unknown as string[]).forEach(id => userIds.add(id.toString()))
+    }
+    if (org.employees) {
+      const empArr = org.employees as unknown as any[]
+      empArr.forEach((id: any) => {
+        if (id) employeeIds.add(id.toString())
+      })
     }
   })
 
@@ -59,7 +71,20 @@ async function populateOrgFields(orgs: Record<string, unknown>[]): Promise<Recor
     .project({ passwordHash: 0 })
     .toArray()
 
+  const employees = await db.collection('employees')
+    .find({ _id: { $in: Array.from(employeeIds).map(id => new ObjectId(id)) } })
+    .toArray()
+
+  const employeeUserIds = new Set(employees.map(e => e.userId?.toString()).filter(Boolean))
+  
+  const employeeUsers = await db.collection('users')
+    .find({ _id: { $in: Array.from(employeeUserIds).map(id => new ObjectId(id)) } })
+    .project({ passwordHash: 0 })
+    .toArray()
+
   const userMap = new Map(users.map(u => [u._id.toString(), u]))
+  const employeeMap = new Map(employees.map(e => [e._id.toString(), e]))
+  const employeeUserMap = new Map(employeeUsers.map(u => [u._id.toString(), u]))
 
   return orgs.map(org => {
     const populated = { ...org }
@@ -70,6 +95,20 @@ async function populateOrgFields(orgs: Record<string, unknown>[]): Promise<Recor
       populated.admin = (org.admin as unknown as string[]).map(id => 
         userMap.get(id.toString()) || id
       )
+    }
+    if (org.employees) {
+      const empArr = org.employees as unknown as any[]
+      if (empArr.length > 0) {
+        populated.employees = empArr.map((id: any) => {
+          const emp = employeeMap.get(id.toString())
+          if (!emp) return id
+          const user = emp.userId ? employeeUserMap.get(emp.userId.toString()) : null
+          return {
+            ...emp,
+            user: user || null,
+          }
+        })
+      }
     }
     return populated
   })

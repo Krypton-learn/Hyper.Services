@@ -37,7 +37,8 @@ export async function createJWT(payload: Record<string, unknown>, expiresInSecon
 
 export async function decodeJWT(token: string): Promise<JWTPayload | null> {
   try {
-    return await verify(token, env.JWT_SECRET, 'HS256');
+    const decoded = await verify(token, env.JWT_SECRET, 'HS256') as unknown as JWTPayload
+    return decoded
   } catch {
     return null
   }

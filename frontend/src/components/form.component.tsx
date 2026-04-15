@@ -56,7 +56,7 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className = '', hasError, ...props }, ref) => {
-    const baseClasses = 'w-full px-4 py-2.5 text-base border bg text-foreground placeholder:text-muted/60 focus:outline-none transition-all duration-200 rounded-lg';
+    const baseClasses = 'w-full px-3 py-2 text-sm border bg text-foreground placeholder:text-muted/60 focus:outline-none transition-all duration-200 rounded-lg';
     const errorClasses = hasError ? 'border-red-400 focus:border-red-400' : 'border-muted/40 focus:border-primary';
     const disabledClasses = props.disabled ? 'bg-muted/10 cursor-not-allowed opacity-50' : '';
 
@@ -120,9 +120,9 @@ const getButtonClasses = (variant: FormButton['variant'] = 'primary', size: Form
   };
 
   const sizes = {
-    sm: 'px-3 py-1.5',
-    md: 'px-4 py-2',
-    lg: 'px-5 py-2.5',
+    sm: 'px-2 py-1',
+    md: 'px-3 py-1.5',
+    lg: 'px-4 py-2',
   };
 
   return `${baseClasses} ${variants[variant]} ${sizes[size]}`;
@@ -250,9 +250,9 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
       const isTouched = touched[field.name];
       const hasError = isTouched && !!error;
 
-      const labelClassName = 'block text-base font-medium text-foreground/80';
-      const errorClassName = 'mt-1.5 text-sm text-red-500';
-      const helperClassName = 'mt-1.5 text-sm text-muted/70';
+      const labelClassName = 'block text-sm font-medium text-foreground/80';
+      const errorClassName = 'mt-1 text-xs text-red-500';
+      const helperClassName = 'mt-1 text-xs text-muted/70';
 
       const inputWrapperClass = layout === 'horizontal' ? 'flex items-center gap-4' : 'space-y-1';
 
@@ -436,14 +436,14 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
     };
 
     const containerClass = layout === 'horizontal'
-      ? 'flex flex-wrap gap-x-6 gap-y-5'
-      : 'space-y-6';
+      ? 'flex flex-wrap gap-x-4 gap-y-3'
+      : 'space-y-3';
 
     return (
       <form
         ref={ref}
         onSubmit={handleSubmit}
-        className={`bg border border-muted/30 rounded-xl p-10 ${className}`}
+        className={`bg border border-muted/30 rounded-xl p-6 ${className}`}
       >
         {title && (
           <div className="mb-5">

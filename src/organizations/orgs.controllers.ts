@@ -34,7 +34,7 @@ export async function createOrgController(c: Context) {
 
     const org = await createOrgsService({
       ...validated.data,
-      founder: userId,
+      founder: validated.data.founder || userId,
     })
 
     return c.json({ message: 'Organization created successfully', org }, 201)

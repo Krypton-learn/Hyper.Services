@@ -68,7 +68,7 @@ export const InterestsPage = () => {
 
       await registerMutation.mutateAsync(payload);
       toast.success('Account created successfully!');
-      navigate({ to: '/dashboard' });
+      navigate({ to: '/login' });
     } catch (error) {
       toast.error('Registration failed. Please try again.');
     }
