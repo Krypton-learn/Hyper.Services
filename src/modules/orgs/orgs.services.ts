@@ -22,7 +22,7 @@ export async function createOrgService({ db, input, userId }: CreateOrgServicePa
   };
 
   await createOrg(db, org);
-  
+
   const member: OrganizationMember = {
     id: generateId(),
     orgId,
@@ -35,7 +35,7 @@ export async function createOrgService({ db, input, userId }: CreateOrgServicePa
   };
 
   await createOrgMember(db, member);
-  
+
   return org;
 }
 
@@ -55,11 +55,11 @@ export interface GetOrgServiceParams {
 
 export async function getOrgService({ db, orgId }: GetOrgServiceParams): Promise<OrganizationWithMembers> {
   const result = await findOrgByIdWithMembers(db, orgId);
-  
+
   if (!result) {
     throw new Error('Organization not found');
   }
-  
+
   return {
     ...result.org,
     members: result.members,
@@ -74,7 +74,7 @@ export interface JoinOrgServiceParams {
 
 export async function joinOrgService({ db, token, userId }: JoinOrgServiceParams): Promise<Organization> {
   const org = await findOrgByToken(db, token);
-  
+
   if (!org) {
     throw new Error('Organization not found');
   }
@@ -96,7 +96,7 @@ export async function joinOrgService({ db, token, userId }: JoinOrgServiceParams
   };
 
   await createOrgMember(db, member);
-  
+
   return org;
 }
 
@@ -108,7 +108,7 @@ export interface RemoveOrgServiceParams {
 
 export async function removeOrgService({ db, orgId, userId }: RemoveOrgServiceParams): Promise<void> {
   const member = await findMemberByUserAndOrg(db, userId, orgId);
-  
+
   if (!member) {
     throw new Error('Not a member of this organization');
   }
@@ -130,7 +130,7 @@ export interface UpdateOrgServiceParams {
 
 export async function updateOrgService({ db, orgId, userId, input }: UpdateOrgServiceParams): Promise<Organization> {
   const member = await findMemberByUserAndOrg(db, userId, orgId);
-  
+
   if (!member) {
     throw new Error('Not a member of this organization');
   }

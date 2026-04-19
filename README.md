@@ -26,12 +26,18 @@ src/
     │   ├── auth.services.ts  # Business logic
     │   ├── auth.controllers.ts # Request handlers
     │   └── auth.routes.ts    # Route definitions
-    └── orgs/               # Organizations module
-        ├── orgs.schema.ts     # Zod schemas
-        ├── orgs.crud.ts      # Database operations
-        ├── orgs.services.ts  # Business logic
-        ├── orgs.controllers.ts # Request handlers
-        └── orgs.routes.ts    # Route definitions
+    ├── orgs/               # Organizations module
+    │   ├── orgs.schema.ts     # Zod schemas
+    │   ├── orgs.crud.ts      # Database operations
+    │   ├── orgs.services.ts  # Business logic
+    │   ├── orgs.controllers.ts # Request handlers
+    │   └── orgs.routes.ts    # Route definitions
+    └── milestones/          # Milestones module
+        ├── milestones.schema.ts # Zod schemas
+        ├── milestones.crud.ts  # Database operations
+        ├── milestones.services.ts # Business logic
+        ├── milestones.controllers.ts # Request handlers
+        └── milestones.routes.ts # Route definitions
 ```
 
 ## Database Schema
@@ -81,6 +87,25 @@ CREATE TABLE organization_members (
 );
 ```
 
+### Milestones Table
+
+```sql
+CREATE TABLE milestones (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  budget REAL,
+  category TEXT,
+  org_id TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  starting_date TEXT,
+  ending_date TEXT,
+  FOREIGN KEY (org_id) REFERENCES organizations(id),
+  FOREIGN KEY (created_by) REFERENCES users(id)
+);
+```
+
 ## API Endpoints
 
 ### Auth
@@ -101,6 +126,15 @@ CREATE TABLE organization_members (
 | POST | `/orgs/join-org` | Join organization by token (requires JWT) |
 | PUT | `/orgs/edit-org/:id` | Update organization (requires JWT) |
 | DELETE | `/orgs/remove-org/:id` | Remove organization (requires JWT) |
+
+### Milestones
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/milestones/create-milestone` | Create milestone (org founder only) |
+| POST | `/milestones/get-milestones` | Get org's milestones (org member) |
+| PUT | `/milestones/edit-milestone/:id` | Update milestone (creator only) |
+| DELETE | `/milestones/remove-milestone/:id` | Delete milestone (creator only) |
 
 ## Usage
 
@@ -239,6 +273,104 @@ curl -X POST http://localhost:8787/orgs/join-org \
   -d '{
     "token": "<org_token>"
   }'
+```
+
+### Create Milestone
+
+```bash
+curl -X POST http://localhost:8787/milestones/create-milestone \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <access_token>" \
+  -d '{
+    "name": "Q1 Goals",
+    "description": "First quarter objectives",
+    "budget": 5000,
+    "category": "Planning",
+    "orgId": "<org_id>",
+    "startingDate": "2026-01-01T00:00:00Z",
+    "endingDate": "2026-03-31T00:00:00Z"
+  }'
+```
+
+Response:
+```json
+{
+  "milestone": {
+    "id": "mile_...",
+    "name": "Q1 Goals",
+    "description": "First quarter objectives",
+    "budget": 5000,
+    "category": "Planning",
+    "orgId": "org_...",
+    "createdBy": "user_...",
+    "createdAt": "2026-04-19T...",
+    "startingDate": "2026-01-01T00:00:00Z",
+    "endingDate": "2026-03-31T00:00:00Z"
+  }
+}
+```
+
+### Get Organization Milestones
+
+```bash
+curl -X POST http://localhost:8787/milestones/get-milestones \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <access_token>" \
+  -d '{
+    "orgToken": "<org_token>"
+  }'
+```
+
+Response:
+```json
+{
+  "milestones": [
+    {
+      "id": "mile_...",
+      "name": "Q1 Goals",
+      "description": "First quarter objectives",
+      "budget": 5000,
+      "category": "Planning",
+      "orgId": "org_...",
+      "createdAt": "2026-04-19T...",
+      "startingDate": "2026-01-01T00:00:00Z",
+      "endingDate": "2026-03-31T00:00:00Z",
+      "createdBy": {
+        "id": "user_...",
+        "name": "John Doe",
+        "email": "user@example.com",
+        "profile": null
+      }
+    }
+  ]
+}
+```
+
+### Update Milestone
+
+```bash
+curl -X PUT http://localhost:8787/milestones/edit-milestone/<milestone_id> \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <access_token>" \
+  -d '{
+    "name": "Updated Name",
+    "budget": 7500,
+    "category": "Development"
+  }'
+```
+
+### Delete Milestone
+
+```bash
+curl -X DELETE http://localhost:8787/milestones/remove-milestone/<milestone_id> \
+  -H "Authorization: Bearer <access_token>"
+```
+
+Response:
+```json
+{
+  "message": "Milestone deleted successfully"
+}
 ```
 
 ## Token Details

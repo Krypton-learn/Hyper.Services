@@ -42,9 +42,9 @@ export async function findOrgById(
   id: string
 ): Promise<Organization | null> {
   const result = await db.prepare('SELECT * FROM organizations WHERE id = ?').bind(id).first();
-  
+
   if (!result) return null;
-  
+
   return {
     id: result.id as string,
     token: result.token as string,
@@ -60,9 +60,9 @@ export async function findOrgByToken(
   token: string
 ): Promise<Organization | null> {
   const result = await db.prepare('SELECT * FROM organizations WHERE token = ?').bind(token).first();
-  
+
   if (!result) return null;
-  
+
   return {
     id: result.id as string,
     token: result.token as string,
@@ -81,9 +81,9 @@ export async function findMemberByUserAndOrg(
   const result = await db.prepare(
     'SELECT * FROM organization_members WHERE user_id = ? AND org_id = ?'
   ).bind(userId, orgId).first();
-  
+
   if (!result) return null;
-  
+
   return {
     id: result.id as string,
     orgId: result.org_id as string,
@@ -147,7 +147,7 @@ export async function findOrgsByUserId(
     WHERE om.user_id = ?
     ORDER BY om.joined_at DESC
   `).bind(userId).all();
-  
+
   return (results.results || []).map((row: Record<string, unknown>) => ({
     id: row.id as string,
     token: row.token as string,
@@ -163,9 +163,9 @@ export async function findOrgByIdWithMembers(
   orgId: string
 ): Promise<{ org: Organization; members: OrganizationMemberWithUser[] } | null> {
   const orgResult = await db.prepare('SELECT * FROM organizations WHERE id = ?').bind(orgId).first();
-  
+
   if (!orgResult) return null;
-  
+
   const org: Organization = {
     id: orgResult.id as string,
     token: orgResult.token as string,
@@ -174,7 +174,7 @@ export async function findOrgByIdWithMembers(
     logo: orgResult.logo as string | undefined,
     createdAt: new Date(orgResult.createdAt as string),
   };
-  
+
   const membersResult = await db.prepare(`
     SELECT 
       om.id,
@@ -194,7 +194,7 @@ export async function findOrgByIdWithMembers(
     WHERE om.org_id = ?
     ORDER BY om.joined_at ASC
   `).bind(orgId).all();
-  
+
   const members: OrganizationMemberWithUser[] = (membersResult.results || []).map((row: Record<string, unknown>) => ({
     id: row.id as string,
     orgId: row.org_id as string,
@@ -210,6 +210,6 @@ export async function findOrgByIdWithMembers(
       profile: row.u_profile ? JSON.parse(row.u_profile as string) : null,
     },
   }));
-  
+
   return { org, members };
 }
