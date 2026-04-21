@@ -1,7 +1,7 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { generateId } from '../../lib/id.lib';
 import { CreateMilestoneInput, UpdateMilestoneInput, Milestone, MilestoneWithCreator } from './milestones.schema';
-import { createMilestone, findMilestonesByOrgId, findMilestoneById, updateMilestone, deleteMilestone } from './milestones.crud';
+import { createMilestone, findMilestonesByOrgToken, findMilestoneById, updateMilestone, deleteMilestone } from './milestones.crud';
 import { findOrgByToken } from '../orgs/orgs.crud';
 
 export interface CreateMilestoneServiceParams {
@@ -11,35 +11,40 @@ export interface CreateMilestoneServiceParams {
 }
 
 export async function createMilestoneService({ db, input, userId }: CreateMilestoneServiceParams): Promise<Milestone> {
+  const org = await findOrgByToken(db, input.token);
+  if (!org) {
+    throw new Error('Organization not found');
+  }
+
   const milestone: Milestone = {
     id: generateId(),
     name: input.name,
     description: input.description,
     budget: input.budget,
     category: input.category,
-    orgId: input.orgId,
+    token: input.token,
     createdBy: userId,
     createdAt: new Date(),
     startingDate: input.startingDate,
     endingDate: input.endingDate,
   };
 
-  await createMilestone(db, milestone);
+  await createMilestone(db, milestone, org.id);
 
   return milestone;
 }
 
-export interface GetOrgMilestonesServiceParams {
+export interface GetMilestonesServiceParams {
   db: D1Database;
-  orgToken: string;
+  token: string;
 }
 
-export async function getOrgMilestonesService({ db, orgToken }: GetOrgMilestonesServiceParams): Promise<MilestoneWithCreator[]> {
-  const org = await findOrgByToken(db, orgToken);
+export async function getMilestonesService({ db, token }: GetMilestonesServiceParams): Promise<MilestoneWithCreator[]> {
+  const org = await findOrgByToken(db, token);
   if (!org) {
     throw new Error('Organization not found');
   }
-  return await findMilestonesByOrgId(db, org.id);
+  return await findMilestonesByOrgToken(db, token);
 }
 
 export interface UpdateMilestoneServiceParams {

@@ -8,7 +8,7 @@ export const createMilestoneSchema = z.object({
   description: z.string().optional(),
   budget: z.number().min(0).optional(),
   category: z.enum(milestoneCategories).optional(),
-  orgId: z.string().min(1),
+  token: z.string().min(1),
   startingDate: z.string().datetime().optional(),
   endingDate: z.string().datetime().optional(),
 });
@@ -22,7 +22,7 @@ export const updateMilestoneSchema = z.object({
   endingDate: z.string().datetime().optional(),
 });
 
-export type CreateMilestoneInput = Omit<z.infer<typeof createMilestoneSchema>, 'orgId'> & { orgId: string };
+export type CreateMilestoneInput = Omit<z.infer<typeof createMilestoneSchema>, 'token'> & { token: string };
 export type UpdateMilestoneInput = z.infer<typeof updateMilestoneSchema>;
 
 export type Milestone = {
@@ -31,7 +31,7 @@ export type Milestone = {
   description: string | undefined;
   budget: number | undefined;
   category: MilestoneCategory | undefined;
-  orgId: string;
+  token: string;
   createdBy: string;
   createdAt: Date;
   startingDate: string | undefined;

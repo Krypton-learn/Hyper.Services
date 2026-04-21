@@ -1,20 +1,21 @@
 import { D1Database } from '@cloudflare/workers-types';
-import { Milestone, MilestoneWithCreator, MilestoneCategory, UpdateMilestoneInput } from './milestones.schema';
+import { Milestone, MilestoneWithCreator, MilestoneCategory } from './milestones.schema';
 
 export async function createMilestone(
   db: D1Database,
-  milestone: Milestone
+  milestone: Milestone,
+  orgId: string
 ): Promise<void> {
   await db.prepare(`
     INSERT INTO milestones (id, name, description, budget, category, org_id, created_by, created_at, starting_date, ending_date)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     milestone.id,
     milestone.name,
     milestone.description || null,
     milestone.budget ?? null,
     milestone.category || null,
-    milestone.orgId,
+    orgId,
     milestone.createdBy,
     milestone.createdAt.toISOString(),
     milestone.startingDate || null,
@@ -26,7 +27,12 @@ export async function findMilestoneById(
   db: D1Database,
   id: string
 ): Promise<Milestone | null> {
-  const result = await db.prepare('SELECT * FROM milestones WHERE id = ?').bind(id).first();
+  const result = await db.prepare(`
+    SELECT m.*, o.token 
+    FROM milestones m
+    JOIN organizations o ON m.org_id = o.id
+    WHERE m.id = ?
+  `).bind(id).first();
   
   if (!result) return null;
   
@@ -36,7 +42,7 @@ export async function findMilestoneById(
     description: result.description as string | undefined,
     budget: result.budget as number | undefined,
     category: result.category as MilestoneCategory | undefined,
-    orgId: result.org_id as string,
+    token: result.token as string,
     createdBy: result.created_by as string,
     createdAt: new Date(result.created_at as string),
     startingDate: result.starting_date as string | undefined,
@@ -83,9 +89,9 @@ export async function updateMilestone(
   await db.prepare(`UPDATE milestones SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
 }
 
-export async function findMilestonesByOrgId(
+export async function findMilestonesByOrgToken(
   db: D1Database,
-  orgId: string
+  orgToken: string
 ): Promise<MilestoneWithCreator[]> {
   const results = await db.prepare(`
     SELECT 
@@ -94,20 +100,21 @@ export async function findMilestonesByOrgId(
       m.description,
       m.budget,
       m.category,
-      m.org_id,
       m.created_by,
       m.created_at,
       m.starting_date,
       m.ending_date,
+      o.token,
       u.id as u_id,
       u.name as u_name,
       u.email as u_email,
       u.profile as u_profile
     FROM milestones m
+    JOIN organizations o ON m.org_id = o.id
     JOIN users u ON m.created_by = u.id
-    WHERE m.org_id = ?
+    WHERE o.token = ?
     ORDER BY m.created_at DESC
-  `).bind(orgId).all();
+  `).bind(orgToken).all();
 
   return (results.results || []).map((row: Record<string, unknown>) => ({
     id: row.id as string,
@@ -115,7 +122,7 @@ export async function findMilestonesByOrgId(
     description: row.description as string | undefined,
     budget: row.budget as number | undefined,
     category: row.category as MilestoneCategory | undefined,
-    orgId: row.org_id as string,
+    token: row.token as string,
     createdAt: new Date(row.created_at as string),
     startingDate: row.starting_date as string | undefined,
     endingDate: row.ending_date as string | undefined,

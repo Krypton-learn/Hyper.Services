@@ -1,5 +1,8 @@
 import { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import { getCookie } from 'hono/cookie';
+import { sign, verify } from 'hono/jwt';
+import { auth } from 'hono/utils/basic-auth';
 
 export interface JwtPayload {
   sub: string;
@@ -17,28 +20,32 @@ export interface RefreshPayload {
 
 export async function verifyJwt(c: Context, secret: string): Promise<JwtPayload> {
   const authHeader = c.req.header('Authorization');
-  
+  console.log(authHeader)
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new HTTPException(401, { message: 'Missing or invalid authorization header' });
   }
 
   const token = authHeader.slice(7);
-  
+  console.log(token)
+
   try {
-    const payload = await c.env.JWT_SECRET.verify(secret, token) as JwtPayload;
+    const payload = await verify(token, secret, "HS256");
+    console.log(payload)
     return payload;
-  } catch {
+  } catch (e) {
+    console.log(e)
     throw new HTTPException(401, { message: 'Invalid or expired token' });
   }
 }
 
 export async function verifyRefreshToken(c: Context, secret: string): Promise<RefreshPayload> {
-  const token = c.req.cookie('refresh_token');
-  
+  const token = getCookie(c, 'refresh_token');
+
   if (!token) {
     throw new HTTPException(401, { message: 'Missing refresh token' });
   }
-  
+
   try {
     const payload = await c.env.JWT_SECRET.verify(secret, token) as RefreshPayload;
     if (payload.type !== 'refresh') {
@@ -50,10 +57,20 @@ export async function verifyRefreshToken(c: Context, secret: string): Promise<Re
   }
 }
 
-export async function generateAccessToken(c: Context, payload: object): Promise<string> {
-  return await c.env.JWT_SECRET.sign(payload, { expiresIn: '50m' });
+export async function generateAccessToken(c: Context, payload: Omit<JwtPayload, 'iat' | 'exp'>): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  return await sign(
+    { ...payload, iat: now, exp: now + 50 * 60 },
+    c.env.JWT_SECRET,
+    'HS256'
+  );
 }
 
-export async function generateRefreshToken(c: Context, payload: object): Promise<string> {
-  return await c.env.JWT_SECRET.sign({ ...payload, type: 'refresh' }, { expiresIn: '7d' });
+export async function generateRefreshToken(c: Context, payload: Pick<RefreshPayload, 'sub'>): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  return await sign(
+    { ...payload, type: 'refresh', iat: now, exp: now + 7 * 24 * 60 * 60 },
+    c.env.JWT_SECRET,
+    'HS256'
+  );
 }

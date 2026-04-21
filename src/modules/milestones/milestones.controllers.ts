@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import { createMilestoneSchema, updateMilestoneSchema } from './milestones.schema';
-import { createMilestoneService, getOrgMilestonesService, updateMilestoneService, removeMilestoneService } from './milestones.services';
+import { createMilestoneService, getMilestonesService, updateMilestoneService, removeMilestoneService } from './milestones.services';
 import { verifyJwt } from '../../lib/jwt.lib';
 import { findMemberByUserAndOrg, findOrgByToken } from '../orgs/orgs.crud';
 
@@ -15,9 +15,14 @@ export async function createMilestoneController(c: Context) {
   const jwt = await verifyJwt(c, c.env.JWT_SECRET);
   
   const db = c.env.DB;
-  const { orgId, ...milestoneInput } = parsed.data;
+  const { token, ...milestoneInput } = parsed.data;
   
-  const member = await findMemberByUserAndOrg(db, jwt.sub, orgId);
+  const org = await findOrgByToken(db, token);
+  if (!org) {
+    return c.json({ error: 'Organization not found' }, 404);
+  }
+  
+  const member = await findMemberByUserAndOrg(db, jwt.sub, org.id);
   if (!member) {
     return c.json({ error: 'You are not a member of this organization' }, 403);
   }
@@ -30,7 +35,7 @@ export async function createMilestoneController(c: Context) {
     db, 
     input: {
       ...milestoneInput,
-      orgId,
+      token,
     },
     userId: jwt.sub,
   });
@@ -38,11 +43,11 @@ export async function createMilestoneController(c: Context) {
   return c.json({ milestone }, 201);
 }
 
-export async function getOrgMilestonesController(c: Context) {
+export async function getMilestonesController(c: Context) {
   const body = await c.req.json();
-  const orgToken = body.orgToken as string;
+  const token = body.token as string;
 
-  if (!orgToken) {
+  if (!token) {
     return c.json({ error: 'Organization token is required' }, 400);
   }
 
@@ -50,7 +55,7 @@ export async function getOrgMilestonesController(c: Context) {
   
   const db = c.env.DB;
   
-  const org = await findOrgByToken(db, orgToken);
+  const org = await findOrgByToken(db, token);
   if (!org) {
     return c.json({ error: 'Organization not found' }, 404);
   }
@@ -60,9 +65,9 @@ export async function getOrgMilestonesController(c: Context) {
     return c.json({ error: 'You are not a member of this organization' }, 403);
   }
 
-  const milestones = await getOrgMilestonesService({ 
+  const milestones = await getMilestonesService({ 
     db, 
-    orgToken,
+    token,
   });
   
   return c.json({ milestones }, 200);

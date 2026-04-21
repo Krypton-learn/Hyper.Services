@@ -11,20 +11,20 @@ export interface RegisterUserServiceParams {
 
 export async function registerUserService({ db, input }: RegisterUserServiceParams): Promise<User> {
   const hashedPassword = await hashPassword(input.password);
-  
+
   const user: User = {
     id: generateId(),
     email: input.email,
     name: input.name,
     phone: input.phone,
     password: hashedPassword,
-    organizations: input.organizations || [],
-    profile: input.profile,
+    organizations: input.organizations || "",
+    profile: input.profile || {},
     createdAt: new Date(),
   };
 
   await createUser(db, user);
-  
+
   return user;
 }
 
@@ -35,14 +35,14 @@ export interface LoginUserServiceParams {
 
 export async function loginUserService({ db, input }: LoginUserServiceParams): Promise<Omit<User, 'password'> | null> {
   const { identifier, password } = input;
-  
+
   let user = await findUserByEmailCrud(db, identifier);
   if (!user) {
     user = await findUserByPhone(db, identifier);
   }
-  
+
   if (!user) return null;
-  
+
   const isValid = await verifyPassword(password, user.password);
   if (!isValid) return null;
 
