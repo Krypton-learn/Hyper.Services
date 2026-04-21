@@ -1,6 +1,6 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { generateId } from '../../lib/id.lib';
-import { CreateTaskInput, UpdateTaskInput, Task } from './tasks.schema';
+import { CreateTaskInput, UpdateTaskInput, Task } from '../../../packages/schemas/tasks.schema';
 import { createTask, findTaskById, findTasksByToken, updateTask, deleteTask } from './tasks.crud';
 import { findOrgByToken } from '../orgs/orgs.crud';
 import { findMilestoneById } from '../milestones/milestones.crud';

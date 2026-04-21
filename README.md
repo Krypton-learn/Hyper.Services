@@ -444,6 +444,89 @@ npm run deploy
 npm run cf-typegen
 ```
 
+---
+
+## Frontend
+
+React + TypeScript frontend built with Vite 7.3, Tailwind CSS 3, TanStack Router, TanStack Query, and Zustand.
+
+### Tech Stack
+
+- **Build Tool**: Vite 7.3
+- **UI Framework**: React 19
+- **Styling**: Tailwind CSS 3
+- **Routing**: TanStack Router
+- **Data Fetching**: TanStack Query
+- **State Management**: Zustand
+
+### Project Structure
+
+```
+frontend/
+├── src/
+│   ├── main.tsx           # App entry point
+│   ├── router.tsx        # TanStack Router configuration
+│   ├── index.css         # Tailwind imports
+│   ├── store/            # Zustand stores
+│   └── App.tsx           # Root component
+├── tailwind.config.js    # Tailwind configuration
+├── postcss.config.js     # PostCSS configuration
+└── package.json
+```
+
+### Setup
+
+```bash
+cd frontend
+npm install
+```
+
+### Development
+
+```bash
+npm run dev
+```
+
+### Routes
+
+| Path | Component |
+|------|-----------|
+| `/` | Home |
+| `/dashboard` | Dashboard |
+
+### Adding New Routes
+
+Create routes using TanStack Router's file-based routing or manual route definitions in `router.tsx`.
+
+### State Management (Zustand)
+
+```typescript
+import { create } from 'zustand'
+
+interface AppState {
+  count: number
+  increment: () => void
+}
+
+export const useAppStore = create<AppState>((set) => ({
+  count: 0,
+  increment: () => set((state) => ({ count: state.count + 1 })),
+}))
+```
+
+### Data Fetching (TanStack Query)
+
+```typescript
+import { useQuery } from '@tanstack/react-query'
+
+function MyComponent() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['myData'],
+    queryFn: () => fetch('/api/data').then(res => res.json()),
+  })
+}
+```
+
 ## License
 
 MIT

@@ -1,5 +1,5 @@
 import { Context } from 'hono';
-import { createTaskSchema, updateTaskSchema } from './tasks.schema';
+import { createTaskSchema, updateTaskSchema } from '../../../packages/schemas/tasks.schema';
 import { createTaskService, getTasksService, updateTaskService, removeTaskService } from './tasks.services';
 import { verifyJwt } from '../../lib/jwt.lib';
 import { findMemberByUserAndOrg, findOrgByToken } from '../orgs/orgs.crud';

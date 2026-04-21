@@ -1,7 +1,7 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { generateId } from '../../lib/id.lib';
 import { generateOrgKey } from '../../lib/token.lib';
-import { CreateOrgInput, UpdateOrgInput, Organization, OrganizationMember, OrganizationWithMembers } from './orgs.schema';
+import { CreateOrgInput, UpdateOrgInput, Organization, OrganizationMember, OrganizationWithMembers } from '../../../packages/schemas/orgs.schema';
 import { createOrg, createOrgMember, findOrgsByUserId, findOrgByToken, findMemberByUserAndOrg, deleteOrgMembers, deleteOrg, updateOrg as updateOrgCrud, findOrgById, findOrgByIdWithMembers } from './orgs.crud';
 
 export interface CreateOrgServiceParams {

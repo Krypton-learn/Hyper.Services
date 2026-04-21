@@ -1,5 +1,5 @@
 import { Context } from 'hono';
-import { createMilestoneSchema, updateMilestoneSchema } from './milestones.schema';
+import { createMilestoneSchema, updateMilestoneSchema } from '../../../packages/schemas/milestones.schema';
 import { createMilestoneService, getMilestonesService, updateMilestoneService, removeMilestoneService } from './milestones.services';
 import { verifyJwt } from '../../lib/jwt.lib';
 import { findMemberByUserAndOrg, findOrgByToken } from '../orgs/orgs.crud';

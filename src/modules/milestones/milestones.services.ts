@@ -1,6 +1,6 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { generateId } from '../../lib/id.lib';
-import { CreateMilestoneInput, UpdateMilestoneInput, Milestone, MilestoneWithCreator } from './milestones.schema';
+import { CreateMilestoneInput, UpdateMilestoneInput, Milestone, MilestoneWithCreator } from '../../../packages/schemas/milestones.schema';
 import { createMilestone, findMilestonesByOrgToken, findMilestoneById, updateMilestone, deleteMilestone } from './milestones.crud';
 import { findOrgByToken } from '../orgs/orgs.crud';
 

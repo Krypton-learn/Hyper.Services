@@ -1,5 +1,5 @@
 import { Context } from 'hono';
-import { createOrgSchema, joinOrgSchema, updateOrgSchema } from './orgs.schema';
+import { createOrgSchema, joinOrgSchema, updateOrgSchema } from '../../../packages/schemas/orgs.schema';
 import { createOrgService, getUserOrgsService, getOrgService, joinOrgService, removeOrgService, updateOrgService } from './orgs.services';
 import { verifyJwt } from '../../lib/jwt.lib';
 

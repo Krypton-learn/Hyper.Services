@@ -1,6 +1,6 @@
 import { getCookie, setCookie } from "hono/cookie";
 import { Context } from 'hono';
-import { registerUserSchema, loginSchema } from './auth.schema';
+import { registerUserSchema, loginSchema } from '../../../packages/schemas/auth.schema';
 import { registerUserService, findUserByEmail, loginUserService } from './auth.services';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../lib/jwt.lib';
 

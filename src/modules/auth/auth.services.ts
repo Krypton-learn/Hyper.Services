@@ -1,7 +1,7 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { generateId } from '../../lib/id.lib';
 import { hashPassword, verifyPassword } from '../../lib/password.lib';
-import { RegisterUserInput, LoginInput, User } from './auth.schema';
+import { RegisterUserInput, LoginInput, User } from '../../../packages/schemas/auth.schema';
 import { createUser, findUserByEmail as findUserByEmailCrud, findUserByPhone } from './auth.crud';
 
 export interface RegisterUserServiceParams {
