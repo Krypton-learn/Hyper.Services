@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 import authRoutes from './modules/auth/auth.routes'
 import orgsRoutes from './modules/orgs/orgs.routes'
 import milestonesRoutes from './modules/milestones/milestones.routes'
@@ -6,14 +7,16 @@ import tasksRoutes from './modules/tasks/tasks.routes'
 
 const app = new Hono()
 
+app.use('*', cors())
+
 app.get('/', (c) => {
   return c.text('Hello from Hyper.Services!')
 })
 
-app.route('/auth', authRoutes)
-app.route('/orgs', orgsRoutes)
-app.route('/milestones', milestonesRoutes)
-app.route('/tasks', tasksRoutes)
+app.route('/api/auth', authRoutes)
+app.route('/api/orgs', orgsRoutes)
+app.route('/api/milestones', milestonesRoutes)
+app.route('/api/tasks', tasksRoutes)
 
 
 export default {

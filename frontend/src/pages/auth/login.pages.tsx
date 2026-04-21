@@ -2,35 +2,35 @@ import { useState } from 'react'
 import { Form, FormField, FormLabel, FormInput, FormButton, FormError } from '../../components/form/Form'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/Card'
 import { useNavigate } from '@tanstack/react-router'
+import { useLogin } from '../../hooks/useAuth'
+import { toast } from 'sonner'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+
+  const login = useLogin()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
-    setLoading(true)
 
-    try {
-      // Mock login - replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      if (!identifier || !password) {
-        setError('Please fill in all fields')
-        return
-      }
-
-      // Navigate to dashboard on success
-      navigate({ to: '/dashboard' })
-    } catch {
-      setError('Invalid credentials')
-    } finally {
-      setLoading(false)
+    if (!identifier || !password) {
+      return
     }
+
+    login.mutate(
+      { identifier, password },
+      {
+        onSuccess: () => {
+          toast.success('Login successful')
+          navigate({ to: '/dashboard' })
+        },
+        onError: (error) => {
+          toast.error(error.message || 'Login failed')
+        },
+      }
+    )
   }
 
   return (
@@ -67,10 +67,10 @@ export function LoginPage() {
               />
             </FormField>
 
-            {error && <FormError>{error}</FormError>}
+            {login.error && <FormError>{login.error.message}</FormError>}
 
-            <FormButton type="submit" variant="primary" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
+            <FormButton type="submit" variant="primary" className="w-full" disabled={login.isPending}>
+              {login.isPending ? 'Signing in...' : 'Sign In'}
             </FormButton>
           </Form>
         </CardContent>

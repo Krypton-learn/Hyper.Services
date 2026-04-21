@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Form, FormField, FormLabel, FormInput, FormButton, FormError } from '../../components/form/Form'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/Card'
 import { useNavigate } from '@tanstack/react-router'
+import { useRegister } from '../../hooks/useAuth'
+import { toast } from 'sonner'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -10,39 +12,42 @@ export function RegisterPage() {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [localError, setLocalError] = useState('')
+
+  const register = useRegister()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setLocalError('')
 
     if (!name || !email || !password) {
-      setError('Please fill in all required fields')
+      setLocalError('Please fill in all required fields')
       return
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setLocalError('Passwords do not match')
       return
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      setLocalError('Password must be at least 6 characters')
       return
     }
 
-    setLoading(true)
-
-    try {
-      // Mock register - replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      navigate({ to: '/dashboard' })
-    } catch {
-      setError('Failed to create account')
-    } finally {
-      setLoading(false)
-    }
+    register.mutate(
+      { name, email, phone, password, organizations: [] },
+      {
+        onSuccess: () => {
+          toast.success('Account created successfully')
+          navigate({ to: '/login' })
+        },
+        onError: (error) => {
+          console.log(error)
+          toast.error(error.message || 'Registration failed')
+        },
+      }
+    )
   }
 
   return (
@@ -115,10 +120,10 @@ export function RegisterPage() {
               />
             </FormField>
 
-            {error && <FormError>{error}</FormError>}
+            {(localError || register.error) && <FormError>{localError || register.error?.message}</FormError>}
 
-            <FormButton type="submit" variant="primary" className="w-full" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create Account'}
+            <FormButton type="submit" variant="primary" className="w-full" disabled={register.isPending}>
+              {register.isPending ? 'Creating account...' : 'Create Account'}
             </FormButton>
           </Form>
         </CardContent>

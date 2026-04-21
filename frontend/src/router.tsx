@@ -1,90 +1,81 @@
 import { createRouter, createBrowserHistory, createRootRoute, createRoute, Outlet, RouterProvider } from '@tanstack/react-router'
-import { useRouterState } from '@tanstack/react-router'
 import { Layout } from './layout'
-import { ProfilePage } from './pages/profile'
 import { LoginPage } from './pages/auth/login.pages'
 import { RegisterPage } from './pages/auth/register.pages'
-
-export const authRoutes = ['/login', '/register']
-export const definedRoutes = ['/', '/organizations', '/profile', '/settings', '/tasks', '/milestones']
+import { OrgsPage } from './pages/orgs/OrgsPage'
+import { OrgDashboardPage } from './pages/orgs/OrgDashboardPage'
+import { TasksPage } from './pages/orgs/TasksPage'
+import { MilestonesPage } from './pages/orgs/MilestonesPage'
 
 const rootRoute = createRootRoute({
-  component: () => {
-    const location = useRouterState({ select: (s) => s.location })
-    const isAuthRoute = authRoutes.includes(location.pathname)
-    const isDefinedRoute = definedRoutes.includes(location.pathname)
-
-    if (isAuthRoute) {
-      return <Outlet />
-    }
-
-    return isDefinedRoute ? (
-      <Layout>
-        <Outlet />
-      </Layout>
-    ) : (
+  component: () => (
+    <Layout>
       <Outlet />
-    )
-  },
+    </Layout>
+  ),
 })
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: () => <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>,
+  component: () => <h1 className="text-3xl font-bold text-gray-900">Home</h1>,
+})
+
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dashboard',
+  component: () => (
+    <div>
+      <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+    </div>
+  ),
 })
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
-  component: () => <LoginPage />,
+  component: LoginPage,
 })
 
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
-  component: () => <RegisterPage />,
+  component: RegisterPage,
 })
 
-const organizationsRoute = createRoute({
+const orgsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/organizations',
-  component: () => <h1 className="text-3xl font-bold text-foreground">Organizations</h1>,
+  component: OrgsPage,
 })
 
-const profileRoute = createRoute({
+const orgDashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/profile',
-  component: () => <ProfilePage />,
+  path: '/organizations/dashboard',
+  component: OrgDashboardPage,
 })
 
-const settingsRoute = createRoute({
+const orgTasksRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/settings',
-  component: () => <h1 className="text-3xl font-bold text-foreground">Settings</h1>,
+  path: '/organizations/tasks',
+  component: TasksPage,
 })
 
-const tasksRoute = createRoute({
+const orgMilestonesRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/tasks',
-  component: () => <h1 className="text-3xl font-bold text-foreground">Tasks</h1>,
-})
-
-const milestonesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/milestones',
-  component: () => <h1 className="text-3xl font-bold text-foreground">Milestones</h1>,
+  path: '/organizations/milestones',
+  component: MilestonesPage,
 })
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  dashboardRoute,
   loginRoute,
   registerRoute,
-  organizationsRoute,
-  profileRoute,
-  settingsRoute,
-  tasksRoute,
-  milestonesRoute,
+  orgsRoute,
+  orgDashboardRoute,
+  orgTasksRoute,
+  orgMilestonesRoute,
 ])
 
 const router = createRouter({ routeTree, history: createBrowserHistory() })
