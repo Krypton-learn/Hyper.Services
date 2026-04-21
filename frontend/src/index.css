@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css?family=Zalando%20Sans%20Expanded:700|Zalando%20Sans%20Expanded:400');
+
+:root {
+  --color-primary:    #9C19F9;
+  --color-secondary:  #F96F0B;
+  --color-background: #F4F3F4;
+  --color-foreground: #262832;
+  --color-muted:      #A399A7;
+  --color-accent:     #69988E;
+}
+
+.dark {
+  --color-primary:    #b44dfa;
+  --color-secondary:  #fa8c3a;
+  --color-background: #262832;
+  --color-foreground: #F4F3F4;
+  --color-muted:      #6b6270;
+  --color-accent:     #4e7a72;
+}
+
+html { font-size: 100%; }
+
+body {
+  font-family: 'Zalando Sans Expanded', sans-serif;
+  font-weight: 400;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: 'Zalando Sans Expanded', sans-serif;
+  font-weight: 700;
+}
+
+h1    { font-size: 4.210rem; }
+h2    { font-size: 3.158rem; }
+h3    { font-size: 2.369rem; }
+h4    { font-size: 1.777rem; }
+h5    { font-size: 1.333rem; }
+small { font-size: 0.750rem; }
