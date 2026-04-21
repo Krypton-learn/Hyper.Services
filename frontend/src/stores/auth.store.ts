@@ -17,7 +17,12 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       isAuthenticated: false,
       setAuth: (user, accessToken) => set({ user, accessToken, isAuthenticated: true }),
-      logout: () => set({ user: null, accessToken: null, isAuthenticated: false }),
+      logout: () => {
+        localStorage.removeItem('auth-storage')
+        localStorage.removeItem('orgs-storage')
+        set({ user: null, accessToken: null, isAuthenticated: false })
+        window.location.href = '/login'
+      },
     }),
     {
       name: 'auth-storage',

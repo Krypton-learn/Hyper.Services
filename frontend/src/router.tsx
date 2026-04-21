@@ -57,7 +57,7 @@ const orgDashboardRoute = createRoute({
 
 const orgTasksRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/organizations/tasks',
+  path: '/organizations/tasks/$token',
   component: TasksPage,
 })
 

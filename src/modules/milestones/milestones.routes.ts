@@ -3,8 +3,8 @@ import { createMilestoneController, getMilestonesController, updateMilestoneCont
 
 const milestonesRoutes = new Hono();
 
-milestonesRoutes.post('/create-milestone', createMilestoneController);
-milestonesRoutes.post('/milestones', getMilestonesController);
+milestonesRoutes.post('/create-milestone/:orgID', createMilestoneController);
+milestonesRoutes.get('/get-all/:orgId', getMilestonesController);
 milestonesRoutes.put('/edit-milestone/:id', updateMilestoneController);
 milestonesRoutes.delete('/remove-milestone/:id', removeMilestoneController);
 

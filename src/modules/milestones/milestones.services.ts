@@ -1,50 +1,41 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { generateId } from '../../lib/id.lib';
 import { CreateMilestoneInput, UpdateMilestoneInput, Milestone, MilestoneWithCreator } from '../../../packages/schemas/milestones.schema';
-import { createMilestone, findMilestonesByOrgToken, findMilestoneById, updateMilestone, deleteMilestone } from './milestones.crud';
-import { findOrgByToken } from '../orgs/orgs.crud';
+import { createMilestone, findMilestonesByOrgId, findMilestoneById, updateMilestone, deleteMilestone } from './milestones.crud';
 
 export interface CreateMilestoneServiceParams {
   db: D1Database;
   input: CreateMilestoneInput;
   userId: string;
+  orgId: string;
 }
 
-export async function createMilestoneService({ db, input, userId }: CreateMilestoneServiceParams): Promise<Milestone> {
-  const org = await findOrgByToken(db, input.token);
-  if (!org) {
-    throw new Error('Organization not found');
-  }
-
+export async function createMilestoneService({ db, input, orgId, userId }: CreateMilestoneServiceParams): Promise<Milestone> {
   const milestone: Milestone = {
     id: generateId(),
     name: input.name,
     description: input.description,
     budget: input.budget,
     category: input.category,
-    token: input.token,
+    orgId: orgId,
     createdBy: userId,
     createdAt: new Date(),
     startingDate: input.startingDate,
     endingDate: input.endingDate,
   };
 
-  await createMilestone(db, milestone, org.id);
+  await createMilestone(db, milestone);
 
   return milestone;
 }
 
 export interface GetMilestonesServiceParams {
   db: D1Database;
-  token: string;
+  orgId: string;
 }
 
-export async function getMilestonesService({ db, token }: GetMilestonesServiceParams): Promise<MilestoneWithCreator[]> {
-  const org = await findOrgByToken(db, token);
-  if (!org) {
-    throw new Error('Organization not found');
-  }
-  return await findMilestonesByOrgToken(db, token);
+export async function getMilestonesService({ db, orgId }: GetMilestonesServiceParams): Promise<MilestoneWithCreator[]> {
+  return await findMilestonesByOrgId(db, orgId);
 }
 
 export interface UpdateMilestoneServiceParams {

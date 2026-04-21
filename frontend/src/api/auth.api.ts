@@ -1,6 +1,5 @@
 import type { LoginInput, RegisterUserInput, User } from '../../../packages/schemas/auth.schema'
-
-const API_BASE = '/api'
+import { apiClient } from './client'
 
 export interface AuthResponse {
   user: User
@@ -8,12 +7,10 @@ export interface AuthResponse {
 }
 
 export async function loginUser(data: LoginInput): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE}/auth/login`, {
+  const response = await apiClient('/auth/login', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(data),
+    requiresAuth: false,
   })
 
   if (!response.ok) {
@@ -25,12 +22,10 @@ export async function loginUser(data: LoginInput): Promise<AuthResponse> {
 }
 
 export async function registerUser(data: RegisterUserInput): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE}/auth/register`, {
+  const response = await apiClient('/auth/register', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(data),
+    requiresAuth: false,
   })
 
   if (!response.ok) {

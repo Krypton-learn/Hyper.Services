@@ -3,6 +3,7 @@ import { useSidebarStore, Sidebar, RightSidebarContent } from './components/Side
 import { X, Settings, User, Building2, LogOut, Target, Flag } from 'lucide-react'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useAuthStore } from './stores/auth.store'
+import { useOrgsStore } from './stores/orgs.store'
 import ReactAvatar from 'react-avatar'
 
 interface LayoutProps {
@@ -14,13 +15,24 @@ export function Layout({ children }: LayoutProps) {
   const routerState = useRouterState()
   const rightOpen = useSidebarStore((s) => s.rightSidebar === 'open')
   const { user, logout } = useAuthStore()
+  const currentOrgToken = useOrgsStore((s) => s.currentOrgToken)
 
   const handleLogout = () => {
     logout()
     navigate({ to: '/login' })
   }
 
-  const marginRight = rightOpen ? 'mr-96' : 'mr-0'
+  const goToTasks = () => {
+    const token = currentOrgToken
+    if (token) {
+      navigate({
+        to: '/organizations/tasks/$token',
+        params: { token },
+      })
+    }
+  }
+
+const marginRight = rightOpen ? 'mr-96' : 'mr-0'
   const currentPath = typeof routerState === 'object' && routerState !== null ? (routerState as { location?: { pathname?: string } }).location?.pathname || '' : ''
 
   const isOrgPage = currentPath === '/organizations' || currentPath.startsWith('/organizations/')
@@ -29,11 +41,6 @@ export function Layout({ children }: LayoutProps) {
     { icon: Building2, label: 'Organizations', href: '/organizations', gap: true },
     { icon: User, label: 'Profile', href: '/profile' },
     { icon: Settings, label: 'Settings', href: '/settings' },
-  ]
-
-  const orgNavItems = [
-    { icon: Target, label: 'Tasks', href: '/organizations/tasks' },
-    { icon: Flag, label: 'Milestones', href: '/organizations/milestones' },
   ]
 
   return (
@@ -67,17 +74,21 @@ export function Layout({ children }: LayoutProps) {
                   <div className="mt-6 pt-4 border-t border-muted/20">
                     <span className="px-3 text-xs font-semibold text-muted uppercase">Organization</span>
                   </div>
-                  {orgNavItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      className="flex items-center gap-3 px-3 py-2 text-foreground hover:bg-muted/20 rounded-lg transition-colors"
-                      activeProps={{ className: 'bg-primary/10 text-primary' }}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  ))}
+                  <button
+                    onClick={goToTasks}
+                    className="flex items-center gap-3 px-3 py-2 text-foreground hover:bg-muted/20 rounded-lg transition-colors w-full"
+                  >
+                    <Target className="w-5 h-5" />
+                    <span>Tasks</span>
+                  </button>
+                  <Link
+                    to="/organizations/milestones"
+                    className="flex items-center gap-3 px-3 py-2 text-foreground hover:bg-muted/20 rounded-lg transition-colors"
+                    activeProps={{ className: 'bg-primary/10 text-primary' }}
+                  >
+                    <Flag className="w-5 h-5" />
+                    <span>Milestones</span>
+                  </Link>
                 </>
               )}
             </nav>

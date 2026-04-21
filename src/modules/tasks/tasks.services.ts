@@ -8,11 +8,12 @@ import { findMilestoneById } from '../milestones/milestones.crud';
 export interface CreateTaskServiceParams {
   db: D1Database;
   input: CreateTaskInput;
+  token: string;
   userId: string;
 }
 
-export async function createTaskService({ db, input, userId }: CreateTaskServiceParams): Promise<Task> {
-  const org = await findOrgByToken(db, input.token);
+export async function createTaskService({ db, input, token, userId }: CreateTaskServiceParams): Promise<Task> {
+  const org = await findOrgByToken(db, token);
   if (!org) {
     throw new Error('Organization not found');
   }
@@ -25,7 +26,7 @@ export async function createTaskService({ db, input, userId }: CreateTaskService
   const task: Task = {
     id: generateId(),
     milestoneId: input.milestoneId,
-    token: input.token,
+    token,
     title: input.title,
     description: input.description,
     startingDate: input.startingDate,

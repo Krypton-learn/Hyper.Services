@@ -211,8 +211,8 @@ CREATE TABLE tasks (
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/milestones/create-milestone` | Create milestone | JWT (org founder) |
-| POST | `/milestones/get-milestones` | Get org's milestones | JWT (member) |
+| POST | `/milestones/create-milestone` | Create milestone (body: orgId) | JWT (org founder) |
+| GET | `/milestones/get-all/:orgId` | Get org's milestones | JWT (member) |
 | PUT | `/milestones/edit-milestone/:id` | Update milestone | JWT (creator) |
 | DELETE | `/milestones/remove-milestone/:id` | Delete milestone | JWT (creator) |
 
@@ -220,10 +220,10 @@ CREATE TABLE tasks (
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/tasks/create-task` | Create task | JWT (org member) |
-| POST | `/tasks/get-tasks` | Get org's tasks | JWT (member) |
-| PUT | `/tasks/update-task/:id` | Update task | JWT (creator) |
-| DELETE | `/tasks/remove-task/:id` | Delete task | JWT (creator) |
+| POST | `/tasks/create-task/:token` | Create task | JWT (org member) |
+| GET | `/tasks/get-all/:token` | Get org's tasks | JWT (member) |
+| PUT | `/tasks/update-task/:token/:id` | Update task | JWT (creator) |
+| DELETE | `/tasks/remove-task/:token/:id` | Delete task | JWT (creator) |
 
 ## Request/Response Examples
 

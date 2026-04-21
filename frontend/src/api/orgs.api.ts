@@ -1,20 +1,8 @@
 import type { CreateOrgInput, UpdateOrgInput, Organization } from '../../../packages/schemas/orgs.schema'
-import { useAuthStore } from '../stores/auth.store'
-
-const API_BASE = '/api'
-
-function getHeaders(): HeadersInit {
-  const accessToken = useAuthStore.getState().accessToken
-  return {
-    'Content-Type': 'application/json',
-    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-  }
-}
+import { apiClient } from './client'
 
 export async function getOrgs(): Promise<Organization[]> {
-  const response = await fetch(`${API_BASE}/orgs/get-orgs/me`, {
-    headers: getHeaders(),
-  })
+  const response = await apiClient('/orgs/get-orgs/me')
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch organizations' }))
@@ -26,9 +14,7 @@ export async function getOrgs(): Promise<Organization[]> {
 }
 
 export async function getOrg(id: string): Promise<Organization> {
-  const response = await fetch(`${API_BASE}/orgs/get-org/${id}`, {
-    headers: getHeaders(),
-  })
+  const response = await apiClient(`/orgs/get-org/${id}`)
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Organization not found' }))
@@ -45,9 +31,8 @@ export interface CreateOrgResponse {
 }
 
 export async function createOrg(data: CreateOrgInput): Promise<CreateOrgResponse> {
-  const response = await fetch(`${API_BASE}/orgs/create-org`, {
+  const response = await apiClient('/orgs/create-org', {
     method: 'POST',
-    headers: getHeaders(),
     body: JSON.stringify(data),
   })
 
@@ -60,9 +45,8 @@ export async function createOrg(data: CreateOrgInput): Promise<CreateOrgResponse
 }
 
 export async function updateOrg(id: string, data: UpdateOrgInput): Promise<Organization> {
-  const response = await fetch(`${API_BASE}/orgs/edit-org/${id}`, {
+  const response = await apiClient(`/orgs/edit-org/${id}`, {
     method: 'PUT',
-    headers: getHeaders(),
     body: JSON.stringify(data),
   })
 
@@ -75,9 +59,8 @@ export async function updateOrg(id: string, data: UpdateOrgInput): Promise<Organ
 }
 
 export async function deleteOrg(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/orgs/remove-org/${id}`, {
+  const response = await apiClient(`/orgs/remove-org/${id}`, {
     method: 'DELETE',
-    headers: getHeaders(),
   })
 
   if (!response.ok) {

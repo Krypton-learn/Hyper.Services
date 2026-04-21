@@ -12,7 +12,6 @@ export const createTaskSchema = z.object({
   priority: z.enum(taskPriority).optional(),
   team: z.array(z.string()).optional(),
   tempTeam: z.array(z.string()).optional(),
-  token: z.string().min(1),
 });
 
 export const updateTaskSchema = z.object({

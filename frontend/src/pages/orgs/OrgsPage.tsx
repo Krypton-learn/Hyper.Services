@@ -3,11 +3,11 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableAct
 import { Button } from '../../components/Button'
 import { Modal } from '../../components/Modal'
 import { Form, FormField, FormLabel, FormInput, FormButton } from '../../components/form/Form'
-import { Plus, Pencil, Trash2, Users, Calendar, Hash, AlertTriangle, ArrowRight } from 'lucide-react'
+import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from '@tanstack/react-router'
 import { useOrgs, useCreateOrg, useDeleteOrg, useUpdateOrg } from '../../hooks/useOrgs'
-import { useSidebarStore } from '../../components/Sidebar'
+import { useOrgsStore } from '../../stores/orgs.store'
 
 type Organization = {
   id: string
@@ -30,57 +30,15 @@ export function OrgsPage() {
   const createOrg = useCreateOrg()
   const updateOrg = useUpdateOrg()
   const deleteOrg = useDeleteOrg()
-
-  const openRightSidebar = useSidebarStore((s) => s.openRightSidebar)
-  const closeRightSidebar = useSidebarStore((s) => s.closeRightSidebar)
+  const setCurrentOrg = useOrgsStore((s) => s.setCurrentOrg)
   const navigate = useNavigate()
 
   const handleRowClick = (org: Organization, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation()
     }
-    openRightSidebar(
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">{org.name}</h3>
-          <button onClick={closeRightSidebar} className="p-1 hover:bg-muted rounded">
-            <Pencil className="w-4 h-4" />
-          </button>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 text-sm">
-            <Hash className="w-4 h-4 text-muted" />
-            <span className="text-muted">ID:</span>
-            <span className="font-mono text-xs">{org.id}</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Users className="w-4 h-4 text-muted" />
-            <span className="text-muted">Token:</span>
-            <span className="font-mono text-xs">{org.token}</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Calendar className="w-4 h-4 text-muted" />
-            <span className="text-muted">Created:</span>
-            <span>{new Date(org.createdAt).toLocaleDateString()}</span>
-          </div>
-          {org.description && (
-            <div className="pt-2">
-              <p className="text-sm text-muted mb-1">Description</p>
-              <p className="text-sm">{org.description}</p>
-            </div>
-          )}
-        </div>
-
-        <Button
-          onClick={() => navigate({ to: '/organizations/dashboard' })}
-          className="w-full"
-        >
-          <ArrowRight className="w-4 h-4 mr-2" />
-          Go to {org.name}
-        </Button>
-      </div>
-    )
+    setCurrentOrg(org.id, org.token, org)
+    navigate({ to: '/organizations/dashboard' })
   }
 
   const resetCreateForm = () => {
@@ -119,50 +77,38 @@ export function OrgsPage() {
     e.preventDefault()
     if (!name.trim()) return
 
-    createOrg.mutate(
-      { name, description },
-      {
-        onSuccess: () => {
-          toast.success('Organization created')
-          resetCreateForm()
-        },
-        onError: (error) => {
-          toast.error(error.message)
-        },
-      }
-    )
+    try {
+      await createOrg.mutateAsync({ name, description })
+      toast.success('Organization created')
+      resetCreateForm()
+    } catch {
+      toast.error('Failed to create organization')
+    }
   }
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim() || !editingOrg) return
 
-    updateOrg.mutate(
-      { id: editingOrg.id, data: { name, description } },
-      {
-        onSuccess: () => {
-          toast.success('Organization updated')
-          resetEditForm()
-        },
-        onError: (error) => {
-          toast.error(error.message)
-        },
-      }
-    )
+    try {
+      await updateOrg.mutateAsync({ id: editingOrg.id, data: { name, description } })
+      toast.success('Organization updated')
+      resetEditForm()
+    } catch {
+      toast.error('Failed to update organization')
+    }
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deletingOrgId) return
 
-    deleteOrg.mutate(deletingOrgId, {
-      onSuccess: () => {
-        toast.success('Organization deleted')
-        resetDeleteForm()
-      },
-      onError: (error) => {
-        toast.error(error.message)
-      },
-    })
+    try {
+      await deleteOrg.mutateAsync(deletingOrgId)
+      toast.success('Organization deleted')
+      resetDeleteForm()
+    } catch {
+      toast.error('Failed to delete organization')
+    }
   }
 
   return (

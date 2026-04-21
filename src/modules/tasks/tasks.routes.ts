@@ -3,9 +3,9 @@ import { createTaskController, getTasksController, updateTaskController, removeT
 
 const tasksRoutes = new Hono();
 
-tasksRoutes.post('/create-task', createTaskController);
-tasksRoutes.post('/get-tasks', getTasksController);
-tasksRoutes.put('/update-task/:id', updateTaskController);
-tasksRoutes.delete('/remove-task/:id', removeTaskController);
+tasksRoutes.post('/create-task/:token', createTaskController);
+tasksRoutes.get('/get-all/:token', getTasksController);
+tasksRoutes.put('/update-task/:token/:id', updateTaskController);
+tasksRoutes.delete('/remove-task/:token/:id', removeTaskController);
 
 export default tasksRoutes;

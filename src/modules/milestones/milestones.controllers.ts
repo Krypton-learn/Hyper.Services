@@ -2,27 +2,33 @@ import { Context } from 'hono';
 import { createMilestoneSchema, updateMilestoneSchema } from '../../../packages/schemas/milestones.schema';
 import { createMilestoneService, getMilestonesService, updateMilestoneService, removeMilestoneService } from './milestones.services';
 import { verifyJwt } from '../../lib/jwt.lib';
-import { findMemberByUserAndOrg, findOrgByToken } from '../orgs/orgs.crud';
+import { findMemberByUserAndOrg, findOrgById } from '../orgs/orgs.crud';
 
 export async function createMilestoneController(c: Context) {
+  const orgId = c.req.param('orgID');
+
+  if (!orgId) {
+    return c.json({
+      error: "Organization Id required"
+    }, 400);
+  }
+
   const body = await c.req.json();
-  
+
   const parsed = createMilestoneSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: 'Validation failed', details: parsed.error.errors }, 400);
   }
 
   const jwt = await verifyJwt(c, c.env.JWT_SECRET);
-  
+
   const db = c.env.DB;
-  const { token, ...milestoneInput } = parsed.data;
-  
-  const org = await findOrgByToken(db, token);
+  const org = await findOrgById(db, orgId);
   if (!org) {
     return c.json({ error: 'Organization not found' }, 404);
   }
-  
-  const member = await findMemberByUserAndOrg(db, jwt.sub, org.id);
+
+  const member = await findMemberByUserAndOrg(db, jwt.sub, orgId);
   if (!member) {
     return c.json({ error: 'You are not a member of this organization' }, 403);
   }
@@ -30,75 +36,72 @@ export async function createMilestoneController(c: Context) {
   if (!member.isFounder) {
     return c.json({ error: 'Only founders can create milestones' }, 403);
   }
-  
-  const milestone = await createMilestoneService({ 
-    db, 
-    input: {
-      ...milestoneInput,
-      token,
-    },
+
+  const milestone = await createMilestoneService({
+    db,
+    input: parsed.data,
+    orgId: orgId,
     userId: jwt.sub,
   });
-  
+
   return c.json({ milestone }, 201);
 }
 
 export async function getMilestonesController(c: Context) {
-  const body = await c.req.json();
-  const token = body.token as string;
+  const orgId = c.req.param('orgId');
 
-  if (!token) {
-    return c.json({ error: 'Organization token is required' }, 400);
+  if (!orgId) {
+    return c.json({ error: 'Organization ID is required' }, 400);
   }
 
   const jwt = await verifyJwt(c, c.env.JWT_SECRET);
-  
+
   const db = c.env.DB;
-  
-  const org = await findOrgByToken(db, token);
+
+  const org = await findOrgById(db, orgId);
   if (!org) {
     return c.json({ error: 'Organization not found' }, 404);
   }
 
-  const member = await findMemberByUserAndOrg(db, jwt.sub, org.id);
+  const member = await findMemberByUserAndOrg(db, jwt.sub, orgId);
   if (!member) {
     return c.json({ error: 'You are not a member of this organization' }, 403);
   }
 
-  const milestones = await getMilestonesService({ 
-    db, 
-    token,
+  const milestones = await getMilestonesService({
+    db,
+    orgId,
   });
-  
+
   return c.json({ milestones }, 200);
 }
 
 export async function updateMilestoneController(c: Context) {
   const milestoneId = c.req.param('id');
-  
+
   if (!milestoneId) {
     return c.json({ error: 'Milestone ID is required' }, 400);
   }
 
   const body = await c.req.json();
-  
+
   const parsed = updateMilestoneSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: 'Validation failed', details: parsed.error.errors }, 400);
   }
 
   const jwt = await verifyJwt(c, c.env.JWT_SECRET);
-  
+
   const db = c.env.DB;
-  
+
   try {
-    const milestone = await updateMilestoneService({ 
-      db, 
+    const milestone = await updateMilestoneService({
+      db,
       milestoneId,
       input: parsed.data,
       userId: jwt.sub,
     });
-    
+
     return c.json({ milestone }, 200);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to update milestone';
@@ -114,22 +117,22 @@ export async function updateMilestoneController(c: Context) {
 
 export async function removeMilestoneController(c: Context) {
   const milestoneId = c.req.param('id');
-  
+
   if (!milestoneId) {
     return c.json({ error: 'Milestone ID is required' }, 400);
   }
 
   const jwt = await verifyJwt(c, c.env.JWT_SECRET);
-  
+
   const db = c.env.DB;
-  
+
   try {
-    await removeMilestoneService({ 
-      db, 
+    await removeMilestoneService({
+      db,
       milestoneId,
       userId: jwt.sub,
     });
-    
+
     return c.json({ message: 'Milestone deleted successfully' }, 200);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to delete milestone';

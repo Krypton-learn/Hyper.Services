@@ -5,6 +5,12 @@ import { verifyJwt } from '../../lib/jwt.lib';
 import { findMemberByUserAndOrg, findOrgByToken } from '../orgs/orgs.crud';
 
 export async function createTaskController(c: Context) {
+  const token = c.req.param('token');
+  
+  if (!token) {
+    return c.json({ error: 'Organization token is required' }, 400);
+  }
+
   const body = await c.req.json();
   
   const parsed = createTaskSchema.safeParse(body);
@@ -15,7 +21,6 @@ export async function createTaskController(c: Context) {
   const jwt = await verifyJwt(c, c.env.JWT_SECRET);
   
   const db = c.env.DB;
-  const { token, ...taskInput } = parsed.data;
   
   const org = await findOrgByToken(db, token);
   if (!org) {
@@ -30,10 +35,8 @@ export async function createTaskController(c: Context) {
   try {
     const task = await createTaskService({ 
       db, 
-      input: {
-        ...taskInput,
-        token,
-      },
+      input: parsed.data,
+      token,
       userId: jwt.sub,
     });
     
@@ -45,8 +48,7 @@ export async function createTaskController(c: Context) {
 }
 
 export async function getTasksController(c: Context) {
-  const body = await c.req.json();
-  const { token } = body;
+  const token = c.req.param('token');
 
   if (!token) {
     return c.json({ error: 'Organization token is required' }, 400);
@@ -81,19 +83,19 @@ export async function getTasksController(c: Context) {
 
 export async function updateTaskController(c: Context) {
   const taskId = c.req.param('id');
+  const token = c.req.param('token');
   
   if (!taskId) {
     return c.json({ error: 'Task ID is required' }, 400);
   }
 
-  const body = await c.req.json();
-  const { token, ...updateData } = body;
-  
   if (!token) {
     return c.json({ error: 'Organization token is required' }, 400);
   }
+
+  const body = await c.req.json();
   
-  const parsed = updateTaskSchema.safeParse(updateData);
+  const parsed = updateTaskSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: 'Validation failed', details: parsed.error.errors }, 400);
   }
@@ -129,14 +131,12 @@ export async function updateTaskController(c: Context) {
 
 export async function removeTaskController(c: Context) {
   const taskId = c.req.param('id');
+  const token = c.req.param('token');
   
   if (!taskId) {
     return c.json({ error: 'Task ID is required' }, 400);
   }
 
-  const body = await c.req.json();
-  const { token } = body;
-  
   if (!token) {
     return c.json({ error: 'Organization token is required' }, 400);
   }
