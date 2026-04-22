@@ -3,10 +3,10 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableAct
 import { Button } from '../../components/Button'
 import { Modal } from '../../components/Modal'
 import { Form, FormField, FormLabel, FormInput, FormButton } from '../../components/form/Form'
-import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-react'
+import { Plus, Pencil, Trash2, AlertTriangle, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from '@tanstack/react-router'
-import { useOrgs, useCreateOrg, useDeleteOrg, useUpdateOrg } from '../../hooks/useOrgs'
+import { useOrgs, useCreateOrg, useDeleteOrg, useUpdateOrg, useJoinOrg } from '../../hooks/useOrgs'
 import { useOrgsStore } from '../../stores/orgs.store'
 
 type Organization = {
@@ -20,9 +20,11 @@ type Organization = {
 export function OrgsPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [joinToken, setJoinToken] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showJoinModal, setShowJoinModal] = useState(false)
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null)
   const [deletingOrgId, setDeletingOrgId] = useState<string | null>(null)
 
@@ -30,6 +32,7 @@ export function OrgsPage() {
   const createOrg = useCreateOrg()
   const updateOrg = useUpdateOrg()
   const deleteOrg = useDeleteOrg()
+  const joinOrg = useJoinOrg()
   const setCurrentOrg = useOrgsStore((s) => s.setCurrentOrg)
   const navigate = useNavigate()
 
@@ -71,6 +74,24 @@ export function OrgsPage() {
   const resetDeleteForm = () => {
     setDeletingOrgId(null)
     setShowDeleteModal(false)
+  }
+
+  const resetJoinForm = () => {
+    setJoinToken('')
+    setShowJoinModal(false)
+  }
+
+  const handleJoin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!joinToken.trim()) return
+
+    try {
+      await joinOrg.mutateAsync(joinToken)
+      toast.success('Successfully joined organization')
+      resetJoinForm()
+    } catch {
+      toast.error('Failed to join organization')
+    }
   }
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -115,10 +136,16 @@ export function OrgsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Organizations</h1>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Organization
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowJoinModal(true)}>
+            <Users className="w-4 h-4 mr-2" />
+            Join
+          </Button>
+          <Button onClick={() => setShowCreateModal(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Organization
+          </Button>
+        </div>
       </div>
 
       {/* Create Modal */}
@@ -185,6 +212,31 @@ export function OrgsPage() {
               {updateOrg.isPending ? 'Saving...' : 'Save'}
             </FormButton>
             <FormButton type="button" variant="outline" onClick={resetEditForm}>
+              Cancel
+            </FormButton>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* Join Modal */}
+      <Modal isOpen={showJoinModal} onClose={resetJoinForm} title="Join Organization">
+        <Form onSubmit={handleJoin} className="space-y-4">
+          <FormField>
+            <FormLabel htmlFor="join-token">Organization Token</FormLabel>
+            <FormInput
+              id="join-token"
+              type="text"
+              placeholder="Enter organization token"
+              value={joinToken}
+              onChange={(e) => setJoinToken(e.target.value)}
+              required
+            />
+          </FormField>
+          <div className="flex gap-3 pt-2">
+            <FormButton type="submit" disabled={joinOrg.isPending}>
+              {joinOrg.isPending ? 'Joining...' : 'Join'}
+            </FormButton>
+            <FormButton type="button" variant="outline" onClick={resetJoinForm}>
               Cancel
             </FormButton>
           </div>

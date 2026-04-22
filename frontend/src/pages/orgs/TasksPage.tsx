@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { useTasks, useCreateTask, useDeleteTask } from '../../hooks/useTasks'
+import { useTasks, useCreateTask, useDeleteTask, useMilestones } from '../../hooks/useTasks'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableActions } from '../../components/Table'
 import { Modal } from '../../components/Modal'
 import { Button } from '../../components/Button'
@@ -20,11 +20,16 @@ export function TasksPage() {
     description: '',
     milestoneId: '',
     priority: 'Medium' as TaskPriority,
+    startingDate: '',
+    dueDate: '',
   })
 
   const { data: tasks, isLoading, error } = useTasks(token || '')
+  const milestones = useMilestones()
   const createTaskMutation = useCreateTask(token || '')
   const deleteTaskMutation = useDeleteTask(token || '')
+
+  const toDatetime = (date: string) => date ? `${date}T00:00:00Z` : undefined
 
   const handleCreate = async () => {
     if (!formData.title || !formData.milestoneId) {
@@ -32,10 +37,14 @@ export function TasksPage() {
       return
     }
     try {
-      await createTaskMutation.mutateAsync(formData)
+      await createTaskMutation.mutateAsync({
+        ...formData,
+        startingDate: toDatetime(formData.startingDate),
+        dueDate: toDatetime(formData.dueDate),
+      })
       toast.success('Task created')
       setIsModalOpen(false)
-      setFormData({ title: '', description: '', milestoneId: '', priority: 'Medium' })
+      setFormData({ title: '', description: '', milestoneId: '', priority: 'Medium', startingDate: '', dueDate: '' })
     } catch {
       toast.error('Failed to create task')
     }
@@ -48,6 +57,11 @@ export function TasksPage() {
     } catch {
       toast.error('Failed to delete task')
     }
+  }
+
+  const getMilestoneName = (milestoneId: string) => {
+    const milestone = milestones.find(m => m.id === milestoneId)
+    return milestone?.name || '-'
   }
 
   return (
@@ -76,7 +90,11 @@ export function TasksPage() {
           <TableRow>
             <TableHead>Title</TableHead>
             <TableHead>Description</TableHead>
+            <TableHead>Milestone</TableHead>
             <TableHead>Priority</TableHead>
+            <TableHead>Start Date</TableHead>
+            <TableHead>Due Date</TableHead>
+            <TableHead>Team</TableHead>
             <TableActions></TableActions>
           </TableRow>
         </TableHeader>
@@ -85,7 +103,11 @@ export function TasksPage() {
             <TableRow key={task.id}>
               <TableCell>{task.title}</TableCell>
               <TableCell>{task.description || '-'}</TableCell>
+              <TableCell>{getMilestoneName(task.milestoneId)}</TableCell>
               <TableCell>{task.priority || '-'}</TableCell>
+              <TableCell>{task.startingDate ? new Date(task.startingDate).toLocaleDateString() : '-'}</TableCell>
+              <TableCell>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'}</TableCell>
+              <TableCell>{task.team?.join(', ') || '-'}</TableCell>
               <TableActions>
                 <button
                   onClick={() => handleDelete(task.id)}
@@ -127,14 +149,19 @@ export function TasksPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Milestone ID</label>
-            <input
-              type="text"
+            <label className="block text-sm font-medium mb-1">Milestone</label>
+            <select
               value={formData.milestoneId}
               onChange={(e) => setFormData({ ...formData, milestoneId: e.target.value })}
               className="w-full px-3 py-2 border rounded-lg"
-              placeholder="Milestone ID"
-            />
+            >
+              <option value="">Select milestone</option>
+              {milestones.map((milestone) => (
+                <option key={milestone.id} value={milestone.id}>
+                  {milestone.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Priority</label>
@@ -148,6 +175,24 @@ export function TasksPage() {
               <option value="High">High</option>
               <option value="Urgent">Urgent</option>
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Start Date</label>
+            <input
+              type="date"
+              value={formData.startingDate}
+              onChange={(e) => setFormData({ ...formData, startingDate: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Due Date</label>
+            <input
+              type="date"
+              value={formData.dueDate}
+              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg"
+            />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>

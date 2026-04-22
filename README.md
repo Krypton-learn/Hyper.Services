@@ -211,7 +211,7 @@ CREATE TABLE tasks (
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/milestones/create-milestone` | Create milestone (body: orgId) | JWT (org founder) |
+| POST | `/milestones/create-milestone/:orgId` | Create milestone | JWT (org founder) |
 | GET | `/milestones/get-all/:orgId` | Get org's milestones | JWT (member) |
 | PUT | `/milestones/edit-milestone/:id` | Update milestone | JWT (creator) |
 | DELETE | `/milestones/remove-milestone/:id` | Delete milestone | JWT (creator) |

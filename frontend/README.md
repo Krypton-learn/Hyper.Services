@@ -49,12 +49,14 @@ frontend/
 │   │       └── MilestonesPage.tsx
 │   ├── hooks/
 │   │   ├── useAuth.ts      # Auth hooks
-│   │   ├── useOrgs.ts    # Organizations hooks
-│   │   └── useTasks.ts   # Tasks hooks (TanStack Query)
+│   │   ├── useOrgs.ts    # Organizations hooks (includes useJoinOrg)
+│   │   ├── useTasks.ts   # Tasks hooks (includes milestones fetching)
+│   │   └── useMilestones.ts # Milestones hooks (CRUD operations)
 │   └── stores/
 │       ├── auth.store.ts    # Auth state (persisted)
 │       ├── orgs.store.ts  # Current org state (persisted)
-│       └── tasks.store.ts # Tasks state (optional)
+│       ├── tasks.store.ts # Tasks state
+│       └── milestones.store.ts # Milestones state
 ├── tailwind.config.js
 ├── postcss.config.js
 └── package.json
@@ -174,12 +176,34 @@ await deleteTaskMutation.mutateAsync(id)
 ### useOrgs Hook
 
 ```typescript
-import { useOrgs, useCreateOrg, useUpdateOrg, useDeleteOrg } from './hooks/useOrgs'
+import { useOrgs, useCreateOrg, useUpdateOrg, useDeleteOrg, useJoinOrg } from './hooks/useOrgs'
 
 const { data: orgs, isLoading } = useOrgs()
 const createOrgMutation = useCreateOrg()
 const updateOrgMutation = useUpdateOrg()
 const deleteOrgMutation = useDeleteOrg()
+const joinOrgMutation = useJoinOrg()
+```
+
+### useMilestones Hook
+
+```typescript
+import { useMilestones, useCreateMilestone, useUpdateMilestone, useDeleteMilestone } from './hooks/useMilestones'
+
+// Fetch milestones for current org (uses currentOrgId from store)
+const { data: milestones, isLoading } = useMilestones()
+
+// Create milestone
+const createMilestoneMutation = useCreateMilestone()
+await createMilestoneMutation.mutateAsync(milestoneData)
+
+// Update milestone
+const updateMilestoneMutation = useUpdateMilestone()
+await updateMilestoneMutation.mutateAsync({ id, data: updateData })
+
+// Delete milestone
+const deleteMilestoneMutation = useDeleteMilestone()
+await deleteMilestoneMutation.mutateAsync(id)
 ```
 
 ## Components

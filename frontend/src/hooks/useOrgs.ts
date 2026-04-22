@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getOrgs, getOrg, createOrg, updateOrg, deleteOrg } from '../api/orgs.api'
+import { getOrgs, getOrg, createOrg, updateOrg, deleteOrg, joinOrg } from '../api/orgs.api'
 import type { CreateOrgResponse } from '../api/orgs.api'
 import type { CreateOrgInput, UpdateOrgInput } from '../../../packages/schemas/orgs.schema'
 import { useOrgsStore } from '../stores/orgs.store'
@@ -55,6 +55,19 @@ export function useDeleteOrg() {
       queryClient.invalidateQueries({ queryKey: ['orgs'] })
       clearCurrentOrg()
       useSidebarStore.getState().closeRightSidebar()
+    },
+  })
+}
+
+export function useJoinOrg() {
+  const queryClient = useQueryClient()
+  const { setCurrentOrg } = useOrgsStore()
+
+  return useMutation({
+    mutationFn: (token: string) => joinOrg(token),
+    onSuccess: (response: CreateOrgResponse) => {
+      queryClient.invalidateQueries({ queryKey: ['orgs'] })
+      setCurrentOrg(response.org.id, response.token, response.org)
     },
   })
 }

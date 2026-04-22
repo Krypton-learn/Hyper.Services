@@ -68,3 +68,17 @@ export async function deleteOrg(id: string): Promise<void> {
     throw new Error(error.message || 'Failed to delete organization')
   }
 }
+
+export async function joinOrg(token: string): Promise<CreateOrgResponse> {
+  const response = await apiClient('/orgs/join-org', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to join organization' }))
+    throw new Error(error.message || 'Failed to join organization')
+  }
+
+  return response.json()
+}

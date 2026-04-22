@@ -32,10 +32,11 @@ export function Layout({ children }: LayoutProps) {
     }
   }
 
-const marginRight = rightOpen ? 'mr-96' : 'mr-0'
+  const marginRight = rightOpen ? 'mr-96' : 'mr-0'
   const currentPath = typeof routerState === 'object' && routerState !== null ? (routerState as { location?: { pathname?: string } }).location?.pathname || '' : ''
 
   const isOrgPage = currentPath === '/organizations' || currentPath.startsWith('/organizations/')
+  const isAuthPage = currentPath === '/login' || currentPath === '/register'
 
   const navItems: { icon: typeof User; label: string; href: string; gap?: boolean }[] = [
     { icon: Building2, label: 'Organizations', href: '/organizations', gap: true },
@@ -46,14 +47,17 @@ const marginRight = rightOpen ? 'mr-96' : 'mr-0'
   return (
     <div className="min-h-screen bg-background">
       {/* Left Sidebar */}
-      <Sidebar position="left">
+      {!isAuthPage && (
+        <Sidebar position="left">
         <div className="flex flex-col h-full justify-between">
           <div className="space-y-6">
             <div className="flex items-center gap-2 px-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">H</span>
-              </div>
-              <span className="font-bold text-lg">HyperRevise</span>
+              <Link to="/organizations" className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold">H</span>
+                </div>
+                <span className="font-bold text-lg">HyperRevise</span>
+              </Link>
             </div>
 
             <nav className="space-y-1">
@@ -119,25 +123,27 @@ const marginRight = rightOpen ? 'mr-96' : 'mr-0'
             </div>
           )}
         </div>
-      </Sidebar>
-
+      </Sidebar>)}
+      
       {/* Right Detail Sidebar */}
-      <Sidebar position="right">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold">Details</h2>
-          <button
-            onClick={useSidebarStore.getState().closeRightSidebar}
-            className="p-1 hover:bg-muted/20 rounded"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <RightSidebarContent />
-      </Sidebar>
+      {!isAuthPage && (
+        <Sidebar position="right">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold">Details</h2>
+            <button
+              onClick={useSidebarStore.getState().closeRightSidebar}
+              className="p-1 hover:bg-muted/20 rounded"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <RightSidebarContent />
+        </Sidebar>
+      )}
 
       {/* Main Content */}
-      <main className={`transition-all duration-300 pt-4 ml-64 ${marginRight}`}>
-        <div className="p-6">{children}</div>
+      <main className={`transition-all duration-300 ${isAuthPage ? 'pt-0' : 'pt-4 ml-64 ' + marginRight}`}>
+        <div className={`${isAuthPage ? '' : 'p-6'}`}>{children}</div>
       </main>
     </div>
   )

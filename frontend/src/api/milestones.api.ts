@@ -13,8 +13,8 @@ export async function getMilestones(orgId: string): Promise<Milestone[]> {
   return data.milestones || []
 }
 
-export async function createMilestone(data: CreateMilestoneInput): Promise<Milestone> {
-  const response = await apiClient('/milestones/create-milestone', {
+export async function createMilestone(orgId: string, data: CreateMilestoneInput): Promise<Milestone> {
+  const response = await apiClient(`/milestones/create-milestone/${orgId}`, {
     method: 'POST',
     body: JSON.stringify(data),
   })
