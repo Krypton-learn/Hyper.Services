@@ -35,18 +35,18 @@ export async function apiClient(endpoint: string, options: ApiClientOptions = {}
         })
       }
     }
+  };
 
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-      ...fetchOptions,
-      headers,
-    })
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    ...fetchOptions,
+    headers,
+  })
 
-    if (response.status === 401) {
-      useAuthStore.getState().logout()
-      router.navigate({ to: '/login' })
-      throw new Error('Unauthorized')
-    }
-
-    return response
+  if (response.status === 401) {
+    useAuthStore.getState().logout()
+    router.navigate({ to: '/login' })
+    throw new Error('Unauthorized')
   }
+
+  return response
 }
