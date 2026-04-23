@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Milestone } from '../../../packages/schemas/milestones.schema'
+import type { Milestone } from '@packages/schemas/milestones.schema'
 
 interface MilestonesState {
   milestones: Milestone[]
@@ -14,16 +14,25 @@ export const useMilestonesStore = create<MilestonesState>()(
   persist(
     (set) => ({
       milestones: [],
-      setMilestones: (milestones) => set({ milestones }),
-      addMilestone: (milestone) => set((state) => ({ milestones: [milestone, ...state.milestones] })),
+      setMilestones: (milestones) => set({ milestones: Array.isArray(milestones) ? milestones : [] }),
+      addMilestone: (milestone) => set((state) => {
+        const currentMilestones = Array.isArray(state.milestones) ? state.milestones : [];
+        return { milestones: [milestone, ...currentMilestones] };
+      }),
       updateMilestone: (milestoneId, data) =>
-        set((state) => ({
-          milestones: state.milestones.map((m) => (m.id === milestoneId ? { ...m, ...data } : m)),
-        })),
+        set((state) => {
+          const currentMilestones = Array.isArray(state.milestones) ? state.milestones : [];
+          return {
+            milestones: currentMilestones.map((m) => (m.id === milestoneId ? { ...m, ...data } : m)),
+          };
+        }),
       removeMilestone: (milestoneId) =>
-        set((state) => ({
-          milestones: state.milestones.filter((m) => m.id !== milestoneId),
-        })),
+        set((state) => {
+          const currentMilestones = Array.isArray(state.milestones) ? state.milestones : [];
+          return {
+            milestones: currentMilestones.filter((m) => m.id !== milestoneId),
+          };
+        }),
     }),
     {
       name: 'milestones-storage',

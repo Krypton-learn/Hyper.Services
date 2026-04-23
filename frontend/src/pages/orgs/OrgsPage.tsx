@@ -8,14 +8,9 @@ import { toast } from 'sonner'
 import { useNavigate } from '@tanstack/react-router'
 import { useOrgs, useCreateOrg, useDeleteOrg, useUpdateOrg, useJoinOrg } from '../../hooks/useOrgs'
 import { useOrgsStore } from '../../stores/orgs.store'
+import type { OrganizationWithMembers } from '@packages/schemas/orgs.schema'
 
-type Organization = {
-  id: string
-  name: string
-  description?: string
-  token: string
-  createdAt: Date
-}
+type Organization = OrganizationWithMembers
 
 export function OrgsPage() {
   const [name, setName] = useState('')
@@ -41,7 +36,7 @@ export function OrgsPage() {
       e.stopPropagation()
     }
     setCurrentOrg(org.id, org.token, org)
-    navigate({ to: '/organizations/dashboard' })
+    navigate({ to: '/organizations/dashboard/$orgId', params: { orgId: org.id } })
   }
 
   const resetCreateForm = () => {
@@ -134,16 +129,16 @@ export function OrgsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Organizations</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowJoinModal(true)}>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={() => setShowJoinModal(true)} className="flex-1 sm:flex-none">
             <Users className="w-4 h-4 mr-2" />
             Join
           </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
+          <Button onClick={() => setShowCreateModal(true)} className="flex-1 sm:flex-none">
             <Plus className="w-4 h-4 mr-2" />
-            Add Organization
+            Add
           </Button>
         </div>
       </div>

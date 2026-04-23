@@ -23,7 +23,7 @@ export async function createOrgMember(
   member: OrganizationMember
 ): Promise<void> {
   await db.prepare(`
-    INSERT INTO organization_members (id, org_id, user_id, is_founder, is_admin, department, role, joined_at)
+    INSERT INTO employees (id, org_id, user_id, is_founder, is_admin, department, role, joined_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     member.id,
@@ -79,7 +79,7 @@ export async function findMemberByUserAndOrg(
   orgId: string
 ): Promise<OrganizationMember | null> {
   const result = await db.prepare(
-    'SELECT * FROM organization_members WHERE user_id = ? AND org_id = ?'
+    'SELECT * FROM employees WHERE user_id = ? AND org_id = ?'
   ).bind(userId, orgId).first();
 
   if (!result) return null;
@@ -100,7 +100,7 @@ export async function deleteOrgMembers(
   db: D1Database,
   orgId: string
 ): Promise<void> {
-  await db.prepare('DELETE FROM organization_members WHERE org_id = ?').bind(orgId).run();
+  await db.prepare('DELETE FROM employees WHERE org_id = ?').bind(orgId).run();
 }
 
 export async function deleteOrg(
@@ -139,23 +139,83 @@ export async function updateOrg(
 
 export async function findOrgsByUserId(
   db: D1Database,
-  userId: string
-): Promise<Organization[]> {
+  userId: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<{ orgs: (Organization & { members: OrganizationMemberWithUser[] })[] }> {
+  const offset = (page - 1) * limit;
+  
   const results = await db.prepare(`
     SELECT o.* FROM organizations o
-    JOIN organization_members om ON o.id = om.org_id
+    JOIN employees om ON o.id = om.org_id
     WHERE om.user_id = ?
     ORDER BY om.joined_at DESC
-  `).bind(userId).all();
+    LIMIT ? OFFSET ?
+  `).bind(userId, limit, offset).all();
 
-  return (results.results || []).map((row: Record<string, unknown>) => ({
-    id: row.id as string,
-    token: row.token as string,
-    name: row.name as string,
-    description: row.description as string | undefined,
-    logo: row.logo as string | undefined,
-    createdAt: new Date(row.createdAt as string),
-  }));
+  const orgs: (Organization & { members: OrganizationMemberWithUser[] })[] = [];
+
+  for (const row of results.results || []) {
+    const org: Organization = {
+      id: row.id as string,
+      token: row.token as string,
+      name: row.name as string,
+      description: row.description as string | undefined,
+      logo: row.logo as string | undefined,
+      createdAt: new Date(row.createdAt as string),
+    };
+
+    const membersResult = await db.prepare(`
+      SELECT 
+        om.id,
+        om.org_id,
+        om.user_id,
+        om.is_founder,
+        om.is_admin,
+        om.department,
+        om.role,
+        om.joined_at,
+        u.id as u_id,
+        u.name as u_name,
+        u.email as u_email,
+        u.profile as u_profile
+      FROM employees om
+      JOIN users u ON om.user_id = u.id
+      WHERE om.org_id = ?
+      ORDER BY om.joined_at ASC
+    `).bind(org.id).all();
+
+    const members: OrganizationMemberWithUser[] = (membersResult.results || []).map((memberRow: Record<string, unknown>) => ({
+      id: memberRow.id as string,
+      orgId: memberRow.org_id as string,
+      isFounder: Boolean(memberRow.is_founder),
+      isAdmin: Boolean(memberRow.is_admin),
+      department: memberRow.department as string | null,
+      role: memberRow.role as OrganizationRole,
+      joinedAt: new Date(memberRow.joined_at as string),
+      user: {
+        id: memberRow.u_id as string,
+        name: memberRow.u_name as string,
+        email: memberRow.u_email as string,
+        profile: memberRow.u_profile ? JSON.parse(memberRow.u_profile as string) : null,
+      },
+    }));
+
+    orgs.push({ ...org, members });
+  }
+
+  return { orgs };
+}
+
+export async function countOrgsByUserId(
+  db: D1Database,
+  userId: string
+): Promise<number> {
+  const result = await db.prepare(`
+    SELECT COUNT(*) as total FROM employees WHERE user_id = ?
+  `).bind(userId).first() as { total: number } | undefined;
+  
+  return result?.total || 0;
 }
 
 export async function findOrgByIdWithMembers(
@@ -189,7 +249,7 @@ export async function findOrgByIdWithMembers(
       u.name as u_name,
       u.email as u_email,
       u.profile as u_profile
-    FROM organization_members om
+    FROM employees om
     JOIN users u ON om.user_id = u.id
     WHERE om.org_id = ?
     ORDER BY om.joined_at ASC

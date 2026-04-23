@@ -12,6 +12,8 @@ export const createTaskSchema = z.object({
   priority: z.enum(taskPriority).optional(),
   team: z.array(z.string()).optional(),
   tempTeam: z.array(z.string()).optional(),
+  assignedTo: z.string().min(1),
+  isCompleted: z.boolean().optional(),
 });
 
 export const updateTaskSchema = z.object({
@@ -22,6 +24,8 @@ export const updateTaskSchema = z.object({
   priority: z.enum(taskPriority).nullish(),
   team: z.array(z.string()).optional(),
   tempTeam: z.array(z.string()).optional(),
+  assignedTo: z.string().nullish(),
+  isCompleted: z.boolean().optional(),
 });
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
@@ -38,6 +42,8 @@ export type Task = {
   priority: TaskPriority | undefined;
   team: string[];
   tempTeam: string[];
+  assignedTo: string;
+  isCompleted: boolean;
   createdBy: string;
   createdAt: Date;
 };

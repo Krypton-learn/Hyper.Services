@@ -1,4 +1,4 @@
-import type { CreateTaskInput, UpdateTaskInput, Task } from '../../../packages/schemas/tasks.schema'
+import type { CreateTaskInput, UpdateTaskInput, Task } from '@packages/schemas/tasks.schema'
 import { apiClient } from './client'
 
 export async function getTasks(token: string): Promise<Task[]> {
@@ -9,8 +9,8 @@ export async function getTasks(token: string): Promise<Task[]> {
     throw new Error(error.message || 'Failed to fetch tasks')
   }
 
-  const data = await response.json()
-  return data.tasks || []
+  const json = await response.json()
+  return Array.isArray(json.tasks) ? json.tasks : []
 }
 
 export async function createTask(token: string, data: CreateTaskInput): Promise<Task> {

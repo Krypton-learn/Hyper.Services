@@ -1,7 +1,7 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { generateId } from '../../lib/id.lib';
 import { CreateMilestoneInput, UpdateMilestoneInput, Milestone, MilestoneWithCreator } from '../../../packages/schemas/milestones.schema';
-import { createMilestone, findMilestonesByOrgId, findMilestoneById, updateMilestone, deleteMilestone } from './milestones.crud';
+import { createMilestone, findMilestonesByOrgId, findMilestoneById, updateMilestone, deleteMilestone, countMilestonesByOrgId } from './milestones.crud';
 
 export interface CreateMilestoneServiceParams {
   db: D1Database;
@@ -32,10 +32,14 @@ export async function createMilestoneService({ db, input, orgId, userId }: Creat
 export interface GetMilestonesServiceParams {
   db: D1Database;
   orgId: string;
+  page?: number;
+  limit?: number;
 }
 
-export async function getMilestonesService({ db, orgId }: GetMilestonesServiceParams): Promise<MilestoneWithCreator[]> {
-  return await findMilestonesByOrgId(db, orgId);
+export async function getMilestonesService({ db, orgId, page = 1, limit = 10 }: GetMilestonesServiceParams): Promise<{ milestones: MilestoneWithCreator[]; total: number }> {
+  const milestones = await findMilestonesByOrgId(db, orgId, page, limit);
+  const total = await countMilestonesByOrgId(db, orgId);
+  return { milestones, total };
 }
 
 export interface UpdateMilestoneServiceParams {

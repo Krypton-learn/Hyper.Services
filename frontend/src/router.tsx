@@ -4,14 +4,23 @@ import { LoginPage } from './pages/auth/login.pages'
 import { RegisterPage } from './pages/auth/register.pages'
 import { OrgsPage } from './pages/orgs/OrgsPage'
 import { OrgDashboardPage } from './pages/orgs/OrgDashboardPage'
-import { TasksPage } from './pages/orgs/TasksPage'
+import { TasksPage } from './pages/orgs/tasks'
 import { MilestonesPage } from './pages/orgs/MilestonesPage'
+import { EmployeesPage } from './pages/orgs/EmployeesPage'
 
 const rootRoute = createRootRoute({
   component: () => (
     <Layout>
       <Outlet />
     </Layout>
+  ),
+  notFoundComponent: () => (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-2">Page Not Found</h1>
+        <p className="text-muted">The page you're looking for doesn't exist.</p>
+      </div>
+    </div>
   ),
 })
 
@@ -51,7 +60,7 @@ const orgsRoute = createRoute({
 
 const orgDashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/organizations/dashboard',
+  path: '/organizations/dashboard/$orgId',
   component: OrgDashboardPage,
 })
 
@@ -63,8 +72,14 @@ const orgTasksRoute = createRoute({
 
 const orgMilestonesRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/organizations/milestones',
+  path: '/organizations/milestones/$orgId',
   component: MilestonesPage,
+})
+
+const orgEmployeesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/organizations/employees/$orgId',
+  component: EmployeesPage,
 })
 
 const routeTree = rootRoute.addChildren([
@@ -76,6 +91,7 @@ const routeTree = rootRoute.addChildren([
   orgDashboardRoute,
   orgTasksRoute,
   orgMilestonesRoute,
+  orgEmployeesRoute,
 ])
 
 const router = createRouter({ routeTree, history: createBrowserHistory() })

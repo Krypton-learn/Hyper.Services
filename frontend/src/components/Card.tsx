@@ -53,10 +53,17 @@ export function CardDescription({ children, className = '' }: CardDescriptionPro
 export interface CardContentProps {
   children: ReactNode
   className?: string
+  padding?: 'none' | 'sm' | 'md' | 'lg'
 }
 
-export function CardContent({ children, className = '' }: CardContentProps) {
-  return <div className={className}>{children}</div>
+export function CardContent({ children, className = '', padding = 'md' }: CardContentProps) {
+  const paddingClasses = {
+    none: '',
+    sm: 'p-3',
+    md: 'p-4',
+    lg: 'p-6',
+  }
+  return <div className={`${paddingClasses[padding]} ${className}`}>{children}</div>
 }
 
 export interface CardFooterProps {

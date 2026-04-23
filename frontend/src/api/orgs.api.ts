@@ -1,7 +1,7 @@
-import type { CreateOrgInput, UpdateOrgInput, Organization } from '../../../packages/schemas/orgs.schema'
+import type { CreateOrgInput, UpdateOrgInput, OrganizationWithMembers } from '@packages/schemas/orgs.schema'
 import { apiClient } from './client'
 
-export async function getOrgs(): Promise<Organization[]> {
+export async function getOrgs(): Promise<OrganizationWithMembers[]> {
   const response = await apiClient('/orgs/get-orgs/me')
 
   if (!response.ok) {
@@ -13,7 +13,7 @@ export async function getOrgs(): Promise<Organization[]> {
   return data.orgs || []
 }
 
-export async function getOrg(id: string): Promise<Organization> {
+export async function getOrg(id: string): Promise<OrganizationWithMembers> {
   const response = await apiClient(`/orgs/get-org/${id}`)
 
   if (!response.ok) {
@@ -25,10 +25,7 @@ export async function getOrg(id: string): Promise<Organization> {
   return data.org
 }
 
-export interface CreateOrgResponse {
-  org: Organization
-  token: string
-}
+export type CreateOrgResponse = OrganizationWithMembers
 
 export async function createOrg(data: CreateOrgInput): Promise<CreateOrgResponse> {
   const response = await apiClient('/orgs/create-org', {
@@ -44,7 +41,7 @@ export async function createOrg(data: CreateOrgInput): Promise<CreateOrgResponse
   return response.json()
 }
 
-export async function updateOrg(id: string, data: UpdateOrgInput): Promise<Organization> {
+export async function updateOrg(id: string, data: UpdateOrgInput): Promise<OrganizationWithMembers> {
   const response = await apiClient(`/orgs/edit-org/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
@@ -81,4 +78,31 @@ export async function joinOrg(token: string): Promise<CreateOrgResponse> {
   }
 
   return response.json()
+}
+
+export interface OrgDashboardStats {
+  milestones: number;
+  tasks: number;
+  employees: number;
+  calendarEvents?: CalendarEvent[];
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  type: 'milestone' | 'task';
+}
+
+export async function getOrgDashboard(orgId: string): Promise<OrgDashboardStats> {
+  const response = await apiClient(`/orgs/dashboard/${orgId}`)
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch dashboard' }))
+    throw new Error(error.message || 'Failed to fetch dashboard')
+  }
+
+  const data = await response.json()
+  return data
 }

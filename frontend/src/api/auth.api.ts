@@ -1,4 +1,4 @@
-import type { LoginInput, RegisterUserInput, User } from '../../../packages/schemas/auth.schema'
+import type { LoginInput, RegisterUserInput, User } from '@packages/schemas/auth.schema'
 import { apiClient } from './client'
 
 export interface AuthResponse {

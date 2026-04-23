@@ -1,6 +1,6 @@
 # Hyper Revise
 
-A Cloudflare Workers API for organization management with milestones and tasks, built with Hono, D1, and JWT authentication.
+A Cloudflare Workers API for organization management with milestones, tasks, and employees, built with Hono, D1, and JWT authentication.
 
 ## Tech Stack
 
@@ -17,29 +17,35 @@ src/
 ├── index.ts                 # Main app entry - routes registration
 ├── lib/                    # Utility functions
 │   ├── id.lib.ts          # generateId() - UUID v4 generator
-│   ├── jwt.lib.ts        # JWT utilities (sign, verify, generate access/refresh tokens)
-│   ├── password.lib.ts  # hashPassword, verifyPassword (SHA-256)
-│   └── token.lib.ts     # generateOrgKey() - Random alphanumeric org token
+│   ├── jwt.lib.ts         # JWT utilities (sign, verify, generate access/refresh tokens)
+│   ├── password.lib.ts   # hashPassword, verifyPassword (SHA-256)
+│   └── token.lib.ts      # generateOrgKey() - Random alphanumeric org token
 └── modules/
     ├── auth/              # Authentication module (register, login, refresh)
     │   ├── auth.schema.ts     # Zod schemas (registerUserSchema, loginSchema)
-    │   ├── auth.crud.ts      # Database operations (createUser, findUserBy*)
+    │   ├── auth.crud.ts       # Database operations (createUser, findUserBy*)
     │   ├── auth.services.ts  # Business logic (registerUser, loginUser)
     │   ├── auth.controllers.ts # Request handlers (register, login, refresh)
     │   └── auth.routes.ts    # Route definitions
     ├── orgs/               # Organizations module
     │   ├── orgs.schema.ts     # Zod schemas, TypeScript types
-    │   ├── orgs.crud.ts      # Database operations
+    │   ├── orgs.crud.ts       # Database operations
     │   ├── orgs.services.ts  # Business logic
     │   ├── orgs.controllers.ts # Request handlers
     │   └── orgs.routes.ts    # Route definitions
-    ├── milestones/          # Milestones module
+    ├── employees/          # Employees module (renamed from organization_members)
+    │   ├── employees.schema.ts # Zod schemas
+    │   ├── employees.crud.ts  # Database operations
+    │   ├── employees.services.ts # Business logic
+    │   ├── employees.controllers.ts # Request handlers
+    │   └── employees.routes.ts # Route definitions
+    ├── milestones/        # Milestones module
     │   ├── milestones.schema.ts # Zod schemas
     │   ├── milestones.crud.ts  # Database operations
     │   ├── milestones.services.ts # Business logic
     │   ├── milestones.controllers.ts # Request handlers
     │   └── milestones.routes.ts # Route definitions
-    └── tasks/                # Tasks module
+    └── tasks/              # Tasks module
         ├── tasks.schema.ts     # Zod schemas
         ├── tasks.crud.ts      # Database operations
         ├── tasks.services.ts  # Business logic
@@ -100,6 +106,8 @@ Request → Controller → Service → CRUD → Database
 
 ## Database Schema
 
+The database uses Cloudflare D1 with the following tables:
+
 ### Users Table
 
 ```sql
@@ -128,10 +136,10 @@ CREATE TABLE organizations (
 );
 ```
 
-### Organization Members Junction Table
+### Employees Table (formerly organization_members)
 
 ```sql
-CREATE TABLE organization_members (
+CREATE TABLE employees (
   id TEXT PRIMARY KEY,
   org_id TEXT NOT NULL,
   user_id TEXT NOT NULL,
@@ -139,9 +147,7 @@ CREATE TABLE organization_members (
   is_admin INTEGER DEFAULT 0,
   department TEXT,
   role TEXT DEFAULT 'Member',
-  joined_at TEXT NOT NULL,
-  FOREIGN KEY (org_id) REFERENCES organizations(id),
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  joined_at TEXT NOT NULL
 );
 ```
 
@@ -155,13 +161,10 @@ CREATE TABLE milestones (
   budget REAL,
   category TEXT,
   org_id TEXT NOT NULL,
-  token TEXT NOT NULL,
   created_by TEXT NOT NULL,
   created_at TEXT NOT NULL,
   starting_date TEXT,
-  ending_date TEXT,
-  FOREIGN KEY (org_id) REFERENCES organizations(id),
-  FOREIGN KEY (created_by) REFERENCES users(id)
+  ending_date TEXT
 );
 ```
 
@@ -179,58 +182,68 @@ CREATE TABLE tasks (
   priority TEXT,
   team TEXT DEFAULT '[]',
   temp_team TEXT DEFAULT '[]',
+  assigned_to TEXT NOT NULL,
+  is_completed INTEGER DEFAULT 0,
   created_by TEXT NOT NULL,
-  created_at TEXT NOT NULL,
-  FOREIGN KEY (milestone_id) REFERENCES milestones(id),
-  FOREIGN KEY (created_by) REFERENCES users(id)
+  created_at TEXT NOT NULL
 );
 ```
 
 ## API Endpoints
 
+All endpoints are prefixed with `/api/`
+
 ### Auth
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/auth/register` | Register new user | None |
-| POST | `/auth/login` | Login (returns access token + refresh cookie) | None |
-| POST | `/auth/refresh` | Refresh access token using refresh cookie | Cookie |
+| POST | `/api/auth/register` | Register new user | None |
+| POST | `/api/auth/login` | Login (returns access token + refresh cookie) | None |
+| POST | `/api/auth/refresh` | Refresh access token using refresh cookie | Cookie |
 
 ### Organizations
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/orgs/create-org` | Create organization | JWT |
-| GET | `/orgs/get-orgs/me` | Get user's organizations | JWT |
-| GET | `/orgs/get-org/:id` | Get organization with members | JWT |
-| POST | `/orgs/join-org` | Join organization by token | JWT |
-| PUT | `/orgs/edit-org/:id` | Update organization | JWT (founder/admin) |
-| DELETE | `/orgs/remove-org/:id` | Remove organization | JWT (founder) |
+| POST | `/api/orgs/create-org` | Create organization | JWT |
+| GET | `/api/orgs/get-orgs/me` | Get user's organizations | JWT |
+| GET | `/api/orgs/get-org/:id` | Get organization with members | JWT |
+| POST | `/api/orgs/join-org` | Join organization by token | JWT |
+| PUT | `/api/orgs/edit-org/:id` | Update organization | JWT (founder/admin) |
+| DELETE | `/api/orgs/remove-org/:id` | Delete organization | JWT (founder) |
+
+### Employees
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/employees/get-all/:orgId` | Get organization's employees | JWT (member) |
+| PUT | `/api/employees/update-member/:orgId/:userId` | Update employee details | JWT (admin) |
+| DELETE | `/api/employees/remove-member/:orgId/:userId` | Remove employee from org | JWT (founder) |
 
 ### Milestones
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/milestones/create-milestone/:orgId` | Create milestone | JWT (org founder) |
-| GET | `/milestones/get-all/:orgId` | Get org's milestones | JWT (member) |
-| PUT | `/milestones/edit-milestone/:id` | Update milestone | JWT (creator) |
-| DELETE | `/milestones/remove-milestone/:id` | Delete milestone | JWT (creator) |
+| POST | `/api/milestones/create-milestone/:orgId` | Create milestone | JWT (org founder) |
+| GET | `/api/milestones/get-all/:orgId` | Get org's milestones | JWT (member) |
+| PUT | `/api/milestones/edit-milestone/:id` | Update milestone | JWT (creator) |
+| DELETE | `/api/milestones/remove-milestone/:id` | Delete milestone | JWT (creator) |
 
 ### Tasks
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/tasks/create-task/:token` | Create task | JWT (org member) |
-| GET | `/tasks/get-all/:token` | Get org's tasks | JWT (member) |
-| PUT | `/tasks/update-task/:token/:id` | Update task | JWT (creator) |
-| DELETE | `/tasks/remove-task/:token/:id` | Delete task | JWT (creator) |
+| POST | `/api/tasks/create-task/:token` | Create task | JWT (org member) |
+| GET | `/api/tasks/get-all/:token` | Get org's tasks | JWT (org member) |
+| PUT | `/api/tasks/update-task/:token/:id` | Update task | JWT (creator) |
+| DELETE | `/api/tasks/remove-task/:token/:id` | Delete task | JWT (creator) |
 
 ## Request/Response Examples
 
 ### Register
 
 ```bash
-curl -X POST http://localhost:8787/auth/register \
+curl -X POST http://localhost:8787/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -258,7 +271,7 @@ Response:
 ### Login
 
 ```bash
-curl -X POST http://localhost:8787/auth/login \
+curl -X POST http://localhost:8787/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "identifier": "user@example.com",
@@ -279,7 +292,7 @@ Set-Cookie header includes refresh_token (HttpOnly, 7 days).
 ### Refresh Token
 
 ```bash
-curl -X POST http://localhost:8787/auth/refresh \
+curl -X POST http://localhost:8787/api/auth/refresh \
   -H "Cookie: refresh_token=eyJ..."
 ```
 
@@ -293,7 +306,7 @@ Response:
 ### Create Organization
 
 ```bash
-curl -X POST http://localhost:8787/orgs/create-org \
+curl -X POST http://localhost:8787/api/orgs/create-org \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <access_token>" \
   -d '{
@@ -318,7 +331,7 @@ Response:
 ### Join Organization
 
 ```bash
-curl -X POST http://localhost:8787/orgs/join-org \
+curl -X POST http://localhost:8787/api/orgs/join-org \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <access_token>" \
   -d '{
@@ -329,7 +342,7 @@ curl -X POST http://localhost:8787/orgs/join-org \
 ### Create Milestone
 
 ```bash
-curl -X POST http://localhost:8787/milestones/create-milestone \
+curl -X POST http://localhost:8787/api/milestones/create-milestone/ABC1234 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <access_token>" \
   -d '{
@@ -337,67 +350,28 @@ curl -X POST http://localhost:8787/milestones/create-milestone \
     "description": "First quarter objectives",
     "budget": 5000,
     "category": "Planning",
-    "token": "ABC1234",
     "startingDate": "2026-01-01T00:00:00Z",
     "endingDate": "2026-03-31T00:00:00Z"
   }'
-```
-
-Response:
-```json
-{
-  "milestone": {
-    "id": "mile_...",
-    "name": "Q1 Goals",
-    "description": "First quarter objectives",
-    "budget": 5000,
-    "category": "Planning",
-    "token": "ABC1234",
-    "createdBy": "user_...",
-    "createdAt": "2026-04-21T...",
-    "startingDate": "2026-01-01T00:00:00Z",
-    "endingDate": "2026-03-31T00:00:00Z"
-  }
-}
 ```
 
 ### Create Task
 
 ```bash
-curl -X POST http://localhost:8787/tasks/create-task \
+curl -X POST http://localhost:8787/api/tasks/create-task/ABC1234 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <access_token>" \
   -d '{
     "milestoneId": "mile_...",
-    "token": "ABC1234",
     "title": "Implement Login",
     "description": "Add JWT authentication",
     "startingDate": "2026-04-20T00:00:00Z",
     "dueDate": "2026-04-25T00:00:00Z",
     "priority": "High",
+    "assignedTo": "user_...",
     "team": [],
     "tempTeam": []
   }'
-```
-
-Response:
-```json
-{
-  "task": {
-    "id": "task_...",
-    "milestoneId": "mile_...",
-    "token": "ABC1234",
-    "title": "Implement Login",
-    "description": "Add JWT authentication",
-    "startingDate": "2026-04-20T00:00:00Z",
-    "dueDate": "2026-04-25T00:00:00Z",
-    "priority": "High",
-    "team": [],
-    "tempTeam": [],
-    "createdBy": "user_...",
-    "createdAt": "2026-04-21T..."
-  }
-}
 ```
 
 ## Migrations
@@ -405,8 +379,11 @@ Response:
 Run migrations using Cloudflare D1:
 
 ```bash
-wrangler d1 execute <database_name> --file=migrations/001_initial_schema.sql
-wrangler d1 execute <database_name> --file=migrations/002_tasks_schema.sql
+wrangler d1 execute hyper-revise-db --file=migrations/001_initial_schema.sql
+wrangler d1 execute hyper-revise-db --file=migrations/002_tasks_schema.sql
+wrangler d1 execute hyper-revise-db --file=migrations/003_rename_org_members_to_employees.sql
+wrangler d1 execute hyper-revise-db --file=migrations/004_add_tasks_completion.sql
+wrangler d1 execute hyper-revise-db --file=migrations/005_make_assigned_to_required.sql
 ```
 
 ## Environment Variables
@@ -438,23 +415,17 @@ npm run dev
 npm run deploy
 ```
 
-### Type Generation
-
-```bash
-npm run cf-typegen
-```
-
 ---
 
 ## Frontend
 
-React + TypeScript frontend built with Vite 7.3, Tailwind CSS 3, TanStack Router, TanStack Query, and Zustand.
+React + TypeScript frontend built with Vite, Tailwind CSS, TanStack Router, TanStack Query, and Zustand.
 
 ### Tech Stack
 
-- **Build Tool**: Vite 7.3
-- **UI Framework**: React 19
-- **Styling**: Tailwind CSS 3
+- **Build Tool**: Vite
+- **UI Framework**: React
+- **Styling**: Tailwind CSS
 - **Routing**: TanStack Router
 - **Data Fetching**: TanStack Query
 - **State Management**: Zustand
@@ -465,12 +436,46 @@ React + TypeScript frontend built with Vite 7.3, Tailwind CSS 3, TanStack Router
 frontend/
 ├── src/
 │   ├── main.tsx           # App entry point
-│   ├── router.tsx        # TanStack Router configuration
-│   ├── index.css         # Tailwind imports
-│   ├── store/            # Zustand stores
-│   └── App.tsx           # Root component
-├── tailwind.config.js    # Tailwind configuration
-├── postcss.config.js     # PostCSS configuration
+│   ├── router.tsx       # TanStack Router configuration
+│   ├── index.css        # Tailwind imports
+│   ├── api/             # API client and endpoints
+│   │   ├── client.ts
+│   │   ├── auth.api.ts
+│   │   ├── orgs.api.ts
+│   │   ├── employees.api.ts
+│   │   ├── milestones.api.ts
+│   │   └── tasks.api.ts
+│   ├── hooks/           # Custom React hooks
+│   │   ├── useAuth.ts
+│   │   ├── useOrgs.ts
+│   │   ├── useEmployees.ts
+│   │   ├── useMilestones.ts
+│   │   └── useTasks.ts
+│   ├── stores/          # Zustand stores
+│   │   ├── auth.store.ts
+│   │   ├── orgs.store.ts
+│   │   ├── employees.store.ts
+│   │   ├── milestones.store.ts
+│   │   ├── tasks.store.ts
+│   │   └── detail.store.ts
+│   ├── pages/          # Page components
+│   │   ├── auth/
+│   │   │   ├── login.pages.tsx
+│   │   │   └── register.pages.tsx
+│   │   ├── orgs/
+│   │   │   ├── OrgsPage.tsx
+│   │   │   ├── OrgDashboardPage.tsx
+│   │   │   ├── EmployeesPage.tsx
+│   │   │   ├── MilestonesPage.tsx
+│   │   │   └── tasks/
+│   │   │       ├── index.tsx
+│   │   │       ├── table.pages.tsx
+│   │   │       └── kanban.pages.tsx
+│   │   └── profile.tsx
+│   ├── layout.tsx       # App layout component
+│   └── App.tsx          # Root component
+├── tailwind.config.js   # Tailwind configuration
+├── postcss.config.js   # PostCSS configuration
 └── package.json
 ```
 
@@ -492,40 +497,13 @@ npm run dev
 | Path | Component |
 |------|-----------|
 | `/` | Home |
-| `/dashboard` | Dashboard |
-
-### Adding New Routes
-
-Create routes using TanStack Router's file-based routing or manual route definitions in `router.tsx`.
-
-### State Management (Zustand)
-
-```typescript
-import { create } from 'zustand'
-
-interface AppState {
-  count: number
-  increment: () => void
-}
-
-export const useAppStore = create<AppState>((set) => ({
-  count: 0,
-  increment: () => set((state) => ({ count: state.count + 1 })),
-}))
-```
-
-### Data Fetching (TanStack Query)
-
-```typescript
-import { useQuery } from '@tanstack/react-query'
-
-function MyComponent() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['myData'],
-    queryFn: () => fetch('/api/data').then(res => res.json()),
-  })
-}
-```
+| `/login` | Login |
+| `/register` | Register |
+| `/orgs` | Organizations List |
+| `/orgs/:token` | Organization Dashboard |
+| `/orgs/:token/employees` | Employees |
+| `/orgs/:token/milestones` | Milestones |
+| `/orgs/:token/tasks` | Tasks Board |
 
 ## License
 

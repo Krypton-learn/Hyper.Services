@@ -4,6 +4,7 @@ import authRoutes from './modules/auth/auth.routes'
 import orgsRoutes from './modules/orgs/orgs.routes'
 import milestonesRoutes from './modules/milestones/milestones.routes'
 import tasksRoutes from './modules/tasks/tasks.routes'
+import employeesRoutes from './modules/employees/employees.routes'
 
 const app = new Hono()
 
@@ -17,6 +18,7 @@ app.route('/api/auth', authRoutes)
 app.route('/api/orgs', orgsRoutes)
 app.route('/api/milestones', milestonesRoutes)
 app.route('/api/tasks', tasksRoutes)
+app.route('/api/employees', employeesRoutes)
 
 
 export default {

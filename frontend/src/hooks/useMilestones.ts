@@ -1,18 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMilestones, createMilestone, updateMilestone, deleteMilestone } from '../api/milestones.api'
-import type { CreateMilestoneInput, UpdateMilestoneInput } from '../../packages/schemas/milestones.schema'
+import type { CreateMilestoneInput, UpdateMilestoneInput, Milestone } from '@packages/schemas/milestones.schema'
 import { useOrgsStore } from '../stores/orgs.store'
 
 export function useMilestones() {
   const currentOrgId = useOrgsStore((state) => state.currentOrgId)
 
-  return useQuery({
+  return useQuery<Milestone[]>({
     queryKey: ['milestones', currentOrgId],
     queryFn: async () => {
       if (!currentOrgId) return []
-      return getMilestones(currentOrgId)
+      const result = await getMilestones(currentOrgId)
+      return result ?? []
     },
     enabled: !!currentOrgId,
+    initialData: [],
   })
 }
 

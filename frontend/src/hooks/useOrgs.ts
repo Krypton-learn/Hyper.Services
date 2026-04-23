@@ -1,14 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getOrgs, getOrg, createOrg, updateOrg, deleteOrg, joinOrg } from '../api/orgs.api'
 import type { CreateOrgResponse } from '../api/orgs.api'
-import type { CreateOrgInput, UpdateOrgInput } from '../../../packages/schemas/orgs.schema'
+import type { CreateOrgInput, UpdateOrgInput } from '@packages/schemas/orgs.schema'
 import { useOrgsStore } from '../stores/orgs.store'
 import { useSidebarStore } from '../components/Sidebar'
 
 export function useOrgs() {
+  const { setOrgs } = useOrgsStore()
+  
   return useQuery({
     queryKey: ['orgs'],
-    queryFn: getOrgs,
+    queryFn: async () => {
+      const orgs = await getOrgs()
+      setOrgs(orgs)
+      return orgs
+    },
   })
 }
 
@@ -22,13 +28,15 @@ export function useOrg(id: string) {
 
 export function useCreateOrg() {
   const queryClient = useQueryClient()
-  const { setCurrentOrg } = useOrgsStore()
+  const { setCurrentOrg, setOrgs, orgs } = useOrgsStore()
 
   return useMutation({
     mutationFn: (data: CreateOrgInput) => createOrg(data),
     onSuccess: (response: CreateOrgResponse) => {
       queryClient.invalidateQueries({ queryKey: ['orgs'] })
-      setCurrentOrg(response.org.id, response.token, response.org)
+      const newOrgs = [...orgs, response]
+      setOrgs(newOrgs)
+      setCurrentOrg(response.id, response.token, response)
       useSidebarStore.getState().closeRightSidebar()
     },
   })
@@ -61,13 +69,15 @@ export function useDeleteOrg() {
 
 export function useJoinOrg() {
   const queryClient = useQueryClient()
-  const { setCurrentOrg } = useOrgsStore()
+  const { setCurrentOrg, setOrgs, orgs } = useOrgsStore()
 
   return useMutation({
     mutationFn: (token: string) => joinOrg(token),
     onSuccess: (response: CreateOrgResponse) => {
       queryClient.invalidateQueries({ queryKey: ['orgs'] })
-      setCurrentOrg(response.org.id, response.token, response.org)
+      const newOrgs = [...orgs, response]
+      setOrgs(newOrgs)
+      setCurrentOrg(response.id, response.token, response)
     },
   })
 }

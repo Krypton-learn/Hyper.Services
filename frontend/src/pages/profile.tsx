@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/Card'
-import { useAuthStore } from '../store/auth'
+import { useAuthStore } from '../stores/auth.store'
 import ReactAvatar from 'react-avatar'
 import { LogOut } from 'lucide-react'
 

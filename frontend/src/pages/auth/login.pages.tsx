@@ -35,10 +35,10 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md mx-auto">
         <CardHeader>
-          <CardTitle>Welcome Back</CardTitle>
-          <CardDescription>Sign in to your account</CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">Welcome Back</CardTitle>
+          <CardDescription className="text-sm sm:text-base">Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>
           <Form onSubmit={handleSubmit} className="space-y-4">
@@ -75,7 +75,7 @@ export function LoginPage() {
           </Form>
         </CardContent>
         <CardFooter className="justify-center">
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted text-center">
             Don&apos;t have an account?{' '}
             <a href="/register" className="text-primary hover:underline">
               Sign up

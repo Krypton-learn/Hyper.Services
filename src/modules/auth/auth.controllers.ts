@@ -6,7 +6,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 
 export async function registerUserController(c: Context) {
   const body = await c.req.json();
-  
+
   const parsed = registerUserSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: 'Validation failed', details: parsed.error.errors }, 400);
@@ -25,7 +25,7 @@ export async function registerUserController(c: Context) {
 
 export async function loginUserController(c: Context) {
   const body = await c.req.json();
-  
+
   const parsed = loginSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: 'Validation failed', details: parsed.error.errors }, 400);

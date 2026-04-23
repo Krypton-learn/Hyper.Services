@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getTasks, createTask, updateTask, deleteTask } from '../api/tasks.api'
 import { getMilestones } from '../api/milestones.api'
-import type { CreateTaskInput, UpdateTaskInput } from '../../../packages/schemas/tasks.schema'
+import type { CreateTaskInput, UpdateTaskInput, Task } from '@packages/schemas/tasks.schema'
 import { useOrgsStore } from '../stores/orgs.store'
 import { useMilestonesStore } from '../stores/milestones.store'
 
@@ -9,7 +9,7 @@ export function useTasks(token: string) {
   const setMilestones = useMilestonesStore((state) => state.setMilestones)
   const currentOrgId = useOrgsStore((state) => state.currentOrgId)
 
-  return useQuery({
+  return useQuery<Task[]>({
     queryKey: ['tasks', token],
     queryFn: async () => {
       const tasks = await getTasks(token)
@@ -19,9 +19,10 @@ export function useTasks(token: string) {
         setMilestones(milestones)
       }
       
-      return tasks
+      return tasks ?? []
     },
     enabled: !!token,
+    initialData: [],
   })
 }
 
@@ -61,5 +62,5 @@ export function useDeleteTask(token: string) {
 
 export function useMilestones() {
   const milestones = useMilestonesStore((state) => state.milestones)
-  return milestones
+  return Array.isArray(milestones) ? milestones : []
 }

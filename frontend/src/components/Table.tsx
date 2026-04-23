@@ -1,46 +1,48 @@
 import type { ReactNode } from 'react'
 
 interface TableProps {
-  children: ReactNode
+  children?: ReactNode
   className?: string
 }
 
 export function Table({ children, className = '' }: TableProps) {
   return (
-    <div className={`rounded-xl border border-border shadow-sm overflow-hidden ${className}`}>
-      {children}
+    <div className="overflow-x-auto">
+      <table className={`w-full min-w-[600px] border-collapse ${className}`}>
+        {children}
+      </table>
     </div>
   )
 }
 
 export function TableHeader({ children, className = '' }: TableProps) {
   return (
-    <div className={`bg-muted/30 ${className}`}>
+    <thead className={`bg-gray-100 ${className}`}>
       {children}
-    </div>
+    </thead>
   )
 }
 
 export function TableBody({ children, className = '' }: TableProps) {
-  return <div className={`divide-y divide-border ${className}`}>{children}</div>
+  return <tbody className={className}>{children}</tbody>
 }
 
 export function TableRow({ children, className = '', onClick }: TableProps & { onClick?: () => void }) {
   return (
-    <div 
+    <tr 
       onClick={onClick}
-      className={`flex w-full hover:bg-muted/50 transition-colors cursor-pointer ${className}`}
+      className={`border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer ${className}`}
     >
       {children}
-    </div>
+    </tr>
   )
 }
 
 export function TableHead({ children, className = '' }: TableProps) {
   return (
-    <div className={`flex-1 min-w-0 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground ${className}`}>
+    <th className={`px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 ${className}`}>
       {children}
-    </div>
+    </th>
   )
 }
 
@@ -50,19 +52,19 @@ interface TableCellProps extends TableProps {
 
 export function TableCell({ children, className = '', colSpan }: TableCellProps) {
   return (
-    <div 
-      className={`flex-1 min-w-0 px-4 py-3 text-sm text-foreground truncate ${className}`}
-      style={colSpan ? { flex: colSpan } : undefined}
+    <td 
+      className={`px-3 sm:px-4 py-3 text-sm text-gray-900 truncate ${className}`}
+      colSpan={colSpan}
     >
       {children}
-    </div>
+    </td>
   )
 }
 
 export function TableActions({ children, className = '' }: TableProps) {
   return (
-    <div className={`flex-1 min-w-0 px-4 py-3 flex justify-end ${className}`}>
-      <div className="flex items-center gap-2">{children}</div>
-    </div>
+    <td className={`px-3 sm:px-4 py-3 flex justify-end ${className}`}>
+      <div className="flex items-center gap-1 sm:gap-2">{children}</div>
+    </td>
   )
 }

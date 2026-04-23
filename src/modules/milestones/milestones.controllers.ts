@@ -49,6 +49,8 @@ export async function createMilestoneController(c: Context) {
 
 export async function getMilestonesController(c: Context) {
   const orgId = c.req.param('orgId');
+  const pages = c.req.query('pages');
+  const offset = c.req.query('offset');
 
   if (!orgId) {
     return c.json({ error: 'Organization ID is required' }, 400);
@@ -66,6 +68,20 @@ export async function getMilestonesController(c: Context) {
   const member = await findMemberByUserAndOrg(db, jwt.sub, orgId);
   if (!member) {
     return c.json({ error: 'You are not a member of this organization' }, 403);
+  }
+
+  if (pages && offset) {
+    const page = parseInt(pages);
+    const limit = parseInt(offset);
+
+    const { milestones, total } = await getMilestonesService({
+      db,
+      orgId,
+      page,
+      limit,
+    });
+
+    return c.json({ milestones, total, page, limit }, 200);
   }
 
   const milestones = await getMilestonesService({

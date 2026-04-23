@@ -52,10 +52,10 @@ export function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md mx-auto">
         <CardHeader>
-          <CardTitle>Create Account</CardTitle>
-          <CardDescription>Join HyperRevise today</CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">Create Account</CardTitle>
+          <CardDescription className="text-sm sm:text-base">Join HyperRevise today</CardDescription>
         </CardHeader>
         <CardContent>
           <Form onSubmit={handleSubmit} className="space-y-4">
@@ -128,7 +128,7 @@ export function RegisterPage() {
           </Form>
         </CardContent>
         <CardFooter className="justify-center">
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted text-center">
             Already have an account?{' '}
             <a href="/login" className="text-primary hover:underline">
               Sign in

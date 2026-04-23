@@ -6,8 +6,8 @@ export async function createTask(
   task: Task
 ): Promise<void> {
   await db.prepare(`
-    INSERT INTO tasks (id, milestone_id, token, title, description, starting_date, due_date, priority, team, temp_team, created_by, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO tasks (id, milestone_id, token, title, description, starting_date, due_date, priority, team, temp_team, assigned_to, is_completed, created_by, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     task.id,
     task.milestoneId,
@@ -19,6 +19,8 @@ export async function createTask(
     task.priority || null,
     JSON.stringify(task.team || []),
     JSON.stringify(task.tempTeam || []),
+    task.assignedTo,
+    task.isCompleted ? 1 : 0,
     task.createdBy,
     task.createdAt.toISOString()
   ).run();
@@ -45,6 +47,8 @@ export async function findTaskById(
     priority: result.priority as TaskPriority | undefined,
     team: result.team ? JSON.parse(result.team as string) : [],
     tempTeam: result.temp_team ? JSON.parse(result.temp_team as string) : [],
+    assignedTo: result.assigned_to as string,
+    isCompleted: result.is_completed === 1,
     createdBy: result.created_by as string,
     createdAt: new Date(result.created_at as string),
   };
@@ -69,6 +73,8 @@ export async function findTasksByMilestoneId(
     priority: row.priority as Task['priority'],
     team: row.team ? JSON.parse(row.team as string) : [],
     tempTeam: row.temp_team ? JSON.parse(row.temp_team as string) : [],
+    assignedTo: row.assigned_to as string,
+    isCompleted: row.is_completed === 1,
     createdBy: row.created_by as string,
     createdAt: new Date(row.created_at as string),
   }));
@@ -76,11 +82,15 @@ export async function findTasksByMilestoneId(
 
 export async function findTasksByToken(
   db: D1Database,
-  token: string
+  token: string,
+  page: number = 1,
+  limit: number = 10
 ): Promise<Task[]> {
+  const offset = (page - 1) * limit;
+
   const results = await db.prepare(`
-    SELECT * FROM tasks WHERE token = ? ORDER BY created_at DESC
-  `).bind(token).all();
+    SELECT * FROM tasks WHERE token = ? ORDER BY created_at DESC LIMIT ? OFFSET ?
+  `).bind(token, limit, offset).all();
 
   return (results.results || []).map((row: Record<string, unknown>) => ({
     id: row.id as string,
@@ -93,9 +103,29 @@ export async function findTasksByToken(
     priority: row.priority as Task['priority'],
     team: row.team ? JSON.parse(row.team as string) : [],
     tempTeam: row.temp_team ? JSON.parse(row.temp_team as string) : [],
+    assignedTo: row.assigned_to as string,
+    isCompleted: row.is_completed === 1,
     createdBy: row.created_by as string,
     createdAt: new Date(row.created_at as string),
   }));
+}
+
+export async function countTasksByToken(
+  db: D1Database,
+  token: string
+): Promise<number> {
+  const result = await db.prepare(`
+    SELECT COUNT(*) as total FROM tasks WHERE token = ?
+  `).bind(token).first() as { total: number } | undefined;
+
+  return result?.total || 0;
+}
+
+export async function deleteTasksByToken(
+  db: D1Database,
+  token: string
+): Promise<void> {
+  await db.prepare('DELETE FROM tasks WHERE token = ?').bind(token).run();
 }
 
 export async function updateTask(
@@ -109,10 +139,12 @@ export async function updateTask(
     priority?: TaskPriority | null;
     team?: string[];
     tempTeam?: string[];
+    assignedTo?: string | null;
+    isCompleted?: boolean;
   }
 ): Promise<void> {
   const updates: string[] = [];
-  const values: (string | null)[] = [];
+  const values: (string | number | null)[] = [];
 
   if (data.title !== undefined) {
     updates.push('title = ?');
@@ -141,6 +173,14 @@ export async function updateTask(
   if (data.tempTeam !== undefined) {
     updates.push('temp_team = ?');
     values.push(JSON.stringify(data.tempTeam));
+  }
+  if (data.assignedTo !== undefined) {
+    updates.push('assigned_to = ?');
+    values.push(data.assignedTo);
+  }
+  if (data.isCompleted !== undefined) {
+    updates.push('is_completed = ?');
+    values.push(data.isCompleted ? 1 : 0);
   }
 
   if (updates.length === 0) return;

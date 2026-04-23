@@ -87,8 +87,12 @@ export async function updateMilestone(
 
 export async function findMilestonesByOrgId(
   db: D1Database,
-  orgId: string
+  orgId: string,
+  page: number = 1,
+  limit: number = 10
 ): Promise<MilestoneWithCreator[]> {
+  const offset = (page - 1) * limit;
+  
   const results = await db.prepare(`
     SELECT 
       m.id,
@@ -109,7 +113,8 @@ export async function findMilestonesByOrgId(
     JOIN users u ON m.created_by = u.id
     WHERE m.org_id = ?
     ORDER BY m.created_at DESC
-  `).bind(orgId).all();
+    LIMIT ? OFFSET ?
+  `).bind(orgId, limit, offset).all();
 
   return (results.results || []).map((row: Record<string, unknown>) => ({
     id: row.id as string,
@@ -135,5 +140,23 @@ export async function deleteMilestone(
   id: string
 ): Promise<void> {
   await db.prepare('DELETE FROM milestones WHERE id = ?').bind(id).run();
+}
+
+export async function countMilestonesByOrgId(
+  db: D1Database,
+  orgId: string
+): Promise<number> {
+  const result = await db.prepare(`
+    SELECT COUNT(*) as total FROM milestones WHERE org_id = ?
+  `).bind(orgId).first() as { total: number } | undefined;
+  
+  return result?.total || 0;
+}
+
+export async function deleteMilestonesByOrgId(
+  db: D1Database,
+  orgId: string
+): Promise<void> {
+  await db.prepare('DELETE FROM milestones WHERE org_id = ?').bind(orgId).run();
 }
 

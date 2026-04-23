@@ -39,6 +39,10 @@ export type OrganizationMember = {
   joinedAt: Date;
 };
 
+export type OrganizationWithMembers = Organization & {
+  members: OrganizationMemberWithUser[];
+};
+
 export type OrganizationMemberWithUser = Omit<OrganizationMember, 'userId'> & {
   user: {
     id: string;
@@ -51,6 +55,6 @@ export type OrganizationMemberWithUser = Omit<OrganizationMember, 'userId'> & {
   };
 };
 
-export type OrganizationWithMembers = Organization & {
+export type OrganizationWithMembersAndUser = Organization & {
   members: OrganizationMemberWithUser[];
 };

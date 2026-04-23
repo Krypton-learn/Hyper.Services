@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Task } from '../../../packages/schemas/tasks.schema'
+import type { Task } from '@packages/schemas/tasks.schema'
 
 interface TasksState {
   tasks: Task[]

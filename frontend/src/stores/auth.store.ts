@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { User } from '../../../packages/schemas/auth.schema'
+import type { User } from '@packages/schemas/auth.schema'
 
 interface AuthState {
   user: User | null

@@ -5,6 +5,8 @@ const milestonesRoutes = new Hono();
 
 milestonesRoutes.post('/create-milestone/:orgID', createMilestoneController);
 milestonesRoutes.get('/get-all/:orgId', getMilestonesController);
+
+milestonesRoutes.get('/get-all/:orgId/paginated', getMilestonesController);
 milestonesRoutes.put('/edit-milestone/:id', updateMilestoneController);
 milestonesRoutes.delete('/remove-milestone/:id', removeMilestoneController);
 

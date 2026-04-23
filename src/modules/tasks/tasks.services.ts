@@ -1,7 +1,7 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { generateId } from '../../lib/id.lib';
 import { CreateTaskInput, UpdateTaskInput, Task } from '../../../packages/schemas/tasks.schema';
-import { createTask, findTaskById, findTasksByToken, updateTask, deleteTask } from './tasks.crud';
+import { createTask, findTaskById, findTasksByToken, updateTask, deleteTask, countTasksByToken } from './tasks.crud';
 import { findOrgByToken } from '../orgs/orgs.crud';
 import { findMilestoneById } from '../milestones/milestones.crud';
 
@@ -34,6 +34,8 @@ export async function createTaskService({ db, input, token, userId }: CreateTask
     priority: input.priority,
     team: input.team || [],
     tempTeam: input.tempTeam || [],
+    assignedTo: input.assignedTo,
+    isCompleted: input.isCompleted ?? false,
     createdBy: userId,
     createdAt: new Date(),
   };
@@ -46,15 +48,19 @@ export async function createTaskService({ db, input, token, userId }: CreateTask
 export interface GetTasksServiceParams {
   db: D1Database;
   token: string;
+  page?: number;
+  limit?: number;
 }
 
-export async function getTasksService({ db, token }: GetTasksServiceParams): Promise<Task[]> {
+export async function getTasksService({ db, token, page = 1, limit = 10 }: GetTasksServiceParams): Promise<{ tasks: Task[]; total: number }> {
   const org = await findOrgByToken(db, token);
   if (!org) {
     throw new Error('Organization not found');
   }
 
-  return await findTasksByToken(db, token);
+  const tasks = await findTasksByToken(db, token, page, limit);
+  const total = await countTasksByToken(db, token);
+  return { tasks, total };
 }
 
 export interface UpdateTaskServiceParams {
@@ -87,6 +93,8 @@ export async function updateTaskService({ db, taskId, token, input, userId }: Up
     priority: input.priority ?? null,
     team: input.team,
     tempTeam: input.tempTeam,
+    assignedTo: input.assignedTo ?? null,
+    isCompleted: input.isCompleted,
   });
 
   const updated = await findTaskById(db, taskId);
