@@ -6,9 +6,6 @@
 	// "compatibility_flags": [
 	//   "nodejs_compat"
 	// ],
-	"vars": {
-  "JWT_SECRET": "f7k2#mQpL9$xRvNw"
-	},
 	// "kv_namespaces": [
 	//   {
 	//     "binding": "MY_KV_NAMESPACE",
