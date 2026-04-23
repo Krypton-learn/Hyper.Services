@@ -1,7 +1,7 @@
 import { useAuthStore } from '../stores/auth.store'
 import { router } from '../router'
 
-const API_BASE = ' https://hyper_revise.ishannepal82.workers.dev'
+const API_BASE = ' https://hyper_revise.ishannepal82.workers.dev/api'
 
 interface ApiClientOptions extends RequestInit {
   requiresAuth?: boolean
