@@ -23,10 +23,11 @@ interface User {
   accountType?: 'Personal' | 'Organization'
 }
 
-interface LoginResponse {
+export interface LoginResponse {
   message: string
   user: User
   accessToken: string
+  refreshToken: string
 }
 
 interface RegisterResponse {
@@ -50,7 +51,7 @@ const handleError = (error: unknown) => {
   }
 }
 
-export const useLogin = () => {
+export const useLogin = (options?: { onSuccess?: (data: LoginResponse) => void; onError?: (error: unknown) => void }) => {
   const navigate = useNavigate()
   const setAuth = useAuthStore((state) => state.setAuth)
   
@@ -60,11 +61,15 @@ export const useLogin = () => {
       return response.data
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.accessToken)
+      setAuth(data.user, data.accessToken, data.refreshToken)
       toast.success(data.message)
       navigate({ to: '/' })
+      options?.onSuccess?.(data)
     },
-    onError: handleError,
+    onError: (error) => {
+      handleError(error)
+      options?.onError?.(error)
+    },
   })
 }
 

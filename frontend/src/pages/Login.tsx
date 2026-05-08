@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Layers } from 'lucide-react'
-import { useLogin } from '../hooks/useAuth'
+import { useLogin, type LoginResponse } from '../hooks/useAuth'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -10,12 +10,12 @@ export default function Login() {
   const [error, setError] = useState('')
   
   const login = useLogin({
-    onSuccess: (data) => {
-      localStorage.setItem('token', data.token)
+    onSuccess: (data: LoginResponse) => {
+      localStorage.setItem('token', data.accessToken)
       navigate({ to: '/' })
     },
-    onError: (err: Error) => {
-      setError(err.message || 'Login failed')
+    onError: (err: unknown) => {
+      setError(err instanceof Error ? err.message : 'Login failed')
     },
   })
 

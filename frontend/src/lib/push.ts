@@ -24,12 +24,10 @@ export async function subscribeToPush(
   registration: ServiceWorkerRegistration,
   vapidPublicKey: string
 ): Promise<PushSubscription> {
-  console.log('VAPID Public Key:', vapidPublicKey)
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
   })
-  console.log('Push Subscription:', JSON.parse(JSON.stringify(subscription)))
   return subscription
 }
 
