@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #9810fa;
+
+  --neutral: #101828;
+  --neutral-secondary: #344054;
+  --neutral-muted: #667085;
+  --background: #ffffff;
+  --background-secondary: #f7f7f8;
+  --font-family: 'Tomorrow', sans-serif;
+}
+
+.dark {
+  --neutral: #f0f0f0;
+  --neutral-secondary: #d9d9d9;
+  --neutral-muted: #a3a3a3;
+  --background: #1a1a1a;
+  --background-secondary: #262626;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family), sans-serif;
+  background: var(--background);
+  color: var(--neutral);
+  transition: background-color 0.3s, color 0.3s;
+}

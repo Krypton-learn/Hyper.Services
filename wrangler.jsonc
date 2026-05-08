@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hyper_revise",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-30",
+  "vars": {
+    "VAPID_PUBLIC_KEY": "BAVx4ElHSpo5Y8jiPggoJMlxlBk05zcnYXcfV92gJPx0osr2BKQ8fDDMT0ZvocA7X0mVfT5Dh8lzjJHDO-KAQ_g",
+    "VAPID_SUBJECT": "mailto:admin@hyperrevise.com",
+    "GROQ_API_KEY": "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"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hyper_services",
+      "database_id": "f4ece56f-0e1b-43c8-8d5c-d4953b416745"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "alias": {
+    "@": "./src"
+  }
+}

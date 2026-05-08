@@ -1,0 +1,24 @@
+.skeleton {
+  --skeleton-base: #e5e7eb;
+  --skeleton-highlight: #f3f4f6;
+}
+
+.dark .skeleton {
+  --skeleton-base: #374151;
+  --skeleton-highlight: #4b5563;
+}
+
+.skeleton-base {
+  background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 50%, var(--skeleton-base) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
